@@ -1,11 +1,16 @@
 ;; wn-org2.el -- an org-mode interface for WordNet
 
+(defconst wn-org2-meta-name "wm-org2")
+(defconst wn-org2-meta-version "0.0.1")
+
+(defconst wn-org2-bufname "*WordNet*")
+
 (defgroup wn-org2 nil
-  "Wordnet org-mode interface."
+  "WordNet org-mode interface."
   :group 'wn-org2)
 
 (defcustom wn-org2-command "wn"
-  "Shell command for wordnet."
+  "Shell command for WordNet wn(1)."
   :type 'string
   :group 'wn-org2)
 
@@ -70,7 +75,7 @@
 (define-key wn-org2-mode-map (kbd "q") 'wn-org2-quit)
 
 (defun wn-org2-quit ()
-  "Kill Word Net windows and buffer."
+  "Kill WordNet windows and buffer."
   (interactive)
   (let ((buffer (current-buffer)))
     (delete-windows-on buffer)
@@ -109,7 +114,7 @@
 					(not (string-prefix-p "Grep of " idx))
 					(not (string= idx ""))))
 				     result))
-    (ido-completing-read "Wordnet: " suggestions)
+    (ido-completing-read "WordNet: " suggestions)
     ))
 
 (defun wn-org2-exec (word &rest args)
@@ -128,16 +133,16 @@
 (defun wn-org2-search (word)
   "Search WordNet for WORD if provided otherwise prompt for it.
 The word at the point is suggested which can be replaced."
-  (interactive (list (read-string "Wordnet: " (current-word))))
-  (unless word (setq word (read-string "Word: ")))
+  (interactive (list (read-string "WordNet: " (current-word))))
   (if (string-match "^\s*$" word) (error "Invalid query"))
+
   (setq word (wn-org2-chomp word))
   (let ((result (apply 'wn-org2-exec word wn-org2-options)))
     (if (string= "" result)
 	;; recursion!
 	(wn-org2-search (wn-org2-suggest word))
       (progn
-	(let ((buf (get-buffer-create "*WordNet*")))
+	(let ((buf (get-buffer-create wn-org2-bufname)))
 	  (with-current-buffer buf
 	    (let ((inhibit-read-only t))
 	      (erase-buffer)
