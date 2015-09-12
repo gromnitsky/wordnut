@@ -28,13 +28,12 @@ to begin with.
 
 In the `*WordNet*` buffer:
 
-<kbd>/</kbd> New search.</br>
-<kbd>Enter</kbd> Lookup a word under the cursor.</br>
-<kbd>l</kbd> Move backward in history.</br>
-<kbd>r</kbd> Move forward in history.</br>
-<kbd>h</kbd> View history</br>
-
-<kbd>q</kbd> Delete buffer
+| <kbd>/</kbd>      | New search                     |
+| <kbd>Enter</kbd>  | Lookup a word under the cursor |
+| <kbd>l</kbd>      | Move backward in history       |
+| <kbd>r</kbd>      | Move forward in history        |
+| <kbd>h</kbd>      | View history                   |
+| <kbd>q</kbd>      | Delete buffer                  |
 
 ## Bugs
 
@@ -43,7 +42,7 @@ In the `*WordNet*` buffer:
 
 ## Credits
 
-The inspiration was (wn-org.el)[http://emacswiki.org/emacs/wn-org.el]
+The inspiration was [wn-org.el](http://emacswiki.org/emacs/wn-org.el)
 mode. wn-org2 still contains the buffer formatting code from it.
 
 ## License
