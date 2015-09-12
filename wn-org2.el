@@ -102,20 +102,26 @@ The word at the point is suggested which can be replaced."
   (if (or (null word) (string-match "^\s*$" word)) (user-error "Invalid query"))
 
   (setq word (wn-org2-chomp word))
-  (let ((result (apply 'wn-org2-exec word wn-org2-cmd-options)))
+  (let ((progress-reporter (make-progress-reporter "WordNet lookup... " 0 2))
+	result buf)
+
+    (setq result (apply 'wn-org2-exec word wn-org2-cmd-options))
+    (progress-reporter-update progress-reporter 1)
+
     (if (equal "" result)
 	;; recursion!
 	(wn-org2-lookup (wn-org2-suggest word))
       ;; else
-      (let ((buf (get-buffer-create wn-org2-bufname)))
-	(with-current-buffer buf
-	  (let ((inhibit-read-only t))
-	    (erase-buffer)
-	    (insert result))
-	  (wn-org2-format-buffer))
-	(wn-org2-switch-to-buffer buf))
-      ))
-  )
+      (setq buf (get-buffer-create wn-org2-bufname))
+      (with-current-buffer buf
+	(let ((inhibit-read-only t))
+	  (erase-buffer)
+	  (insert result))
+	(wn-org2-format-buffer))
+      (progress-reporter-update progress-reporter 2)
+      (progress-reporter-done progress-reporter)
+      (wn-org2-switch-to-buffer buf))
+    ))
 
 (defun wn-org2-lookup-current-word ()
   (interactive)
