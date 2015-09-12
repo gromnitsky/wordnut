@@ -147,6 +147,13 @@ The word at the point is suggested which can be replaced."
   (setq wn-org2-hist-forw '())
   )
 
+(defun wn-org2-lookup-history ()
+  (interactive)
+  (let ((items (delete-dups (append wn-org2-hist-back wn-org2-hist-forw))))
+    (unless items (user-error "History is empty"))
+    (wn-org2-lookup (ido-completing-read "wm-org2 history: " items) t)
+    ))
+
 (defun wn-org2-history-backward ()
   (interactive)
   (unless wn-org2-hist-back (user-error "No items in the back history"))
