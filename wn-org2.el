@@ -41,6 +41,9 @@
     "Coordinate" "Grep" "Similarity"
     "Entailment" "'Cause To'" "Sample" "Overview"))
 
+(defvar wn-org2-hist-back '())
+(defvar wn-org2-hist-forw '())
+
 
 
 (define-derived-mode wn-org2-mode
@@ -55,7 +58,8 @@ Turning on WordNet mode runs the normal hook `wn-org2-mode-hook'.
 
 (define-key wn-org2-mode-map (kbd "q") 'delete-window)
 (define-key wn-org2-mode-map (kbd "RET") 'wn-org2-lookup-current-word)
-(define-key wn-org2-mode-map (kbd "/") 'wn-org2-search)
+(define-key wn-org2-mode-map (kbd "l") 'wn-org2-history-backward)
+(define-key wn-org2-mode-map (kbd "r") 'wn-org2-history-forward)
 
 ;; this mode is suitable only for specially formatted data
 (put 'wn-org2-mode 'mode-class 'special)
@@ -98,7 +102,7 @@ The word at the point is suggested which can be replaced."
 ;; that returns nothing, bail out. If we get a list of words, show
 ;; them to the user, then rerun `wn-org2-lookup' with the selected
 ;; word.
-(defun wn-org2-lookup (word)
+(defun wn-org2-lookup (word &optional dont-modify-history)
   (if (or (null word) (string-match "^\s*$" word)) (user-error "Invalid query"))
 
   (setq word (wn-org2-chomp word))
@@ -118,6 +122,8 @@ The word at the point is suggested which can be replaced."
 	  (erase-buffer)
 	  (insert result))
 	(wn-org2-format-buffer))
+      (if (not dont-modify-history)
+	  (push word wn-org2-hist-back)) ; FIXME: auto-cut if too big, rm dups
       (progress-reporter-update progress-reporter 2)
       (progress-reporter-done progress-reporter)
       (wn-org2-switch-to-buffer buf))
@@ -133,6 +139,31 @@ The word at the point is suggested which can be replaced."
       (split-window-vertically))
     (other-window 1)
     (switch-to-buffer buf)))
+
+(defun wn-org2-history-clean ()
+  (interactive)
+  (setq wn-org2-hist-back '())
+  (setq wn-org2-hist-forw '())
+  )
+
+(defun wn-org2-history-backward ()
+  (interactive)
+  (unless wn-org2-hist-back (user-error "No items in the back history"))
+
+  (let ((word (pop wn-org2-hist-back)))
+    (push word wn-org2-hist-forw)
+    (if (not wn-org2-hist-back) (user-error "No more back history"))
+    (wn-org2-lookup (car wn-org2-hist-back) t)))
+
+(defun wn-org2-history-forward ()
+  (interactive)
+  (unless wn-org2-hist-forw (user-error "No items in the forward history"))
+
+  (let ((word (pop wn-org2-hist-forw)))
+    (push word wn-org2-hist-back)
+    (if (not wn-org2-hist-forw) (user-error "No more forward history"))
+    (wn-org2-lookup (car wn-org2-hist-forw) t)))
+
 
 ;; FIXME: it should operate on a string, not on a buffer content
 (defun wn-org2-format-buffer ()
