@@ -43,6 +43,7 @@
 
 (defvar wn-org2-hist-back '())
 (defvar wn-org2-hist-forw '())
+(defvar wn-org2-hist-cur nil)
 
 
 
@@ -124,8 +125,11 @@ The word at the point is suggested which can be replaced."
 	  (erase-buffer)
 	  (insert result))
 	(wn-org2-format-buffer))
+
       (if (not dont-modify-history)
 	  (push word wn-org2-hist-back)) ; FIXME: auto-cut if too big, rm dups
+      (setq wn-org2-hist-cur word)
+
       (progress-reporter-update progress-reporter 2)
       (progress-reporter-done progress-reporter)
       (wn-org2-switch-to-buffer buf))
@@ -146,6 +150,7 @@ The word at the point is suggested which can be replaced."
   (interactive)
   (setq wn-org2-hist-back '())
   (setq wn-org2-hist-forw '())
+  (setq wn-org2-hist-cur nil)
   )
 
 (defun wn-org2-lookup-history ()
@@ -161,8 +166,9 @@ The word at the point is suggested which can be replaced."
 
   (let ((word (pop wn-org2-hist-back)))
     (push word wn-org2-hist-forw)
-    (if (not wn-org2-hist-back) (user-error "No more back history"))
-    (wn-org2-lookup (car wn-org2-hist-back) t)))
+    (if (equal word wn-org2-hist-cur) (setq word (car wn-org2-hist-back)))
+    (if (not word) (user-error "No more backward history"))
+    (wn-org2-lookup word t)))
 
 (defun wn-org2-history-forward ()
   (interactive)
@@ -170,9 +176,9 @@ The word at the point is suggested which can be replaced."
 
   (let ((word (pop wn-org2-hist-forw)))
     (push word wn-org2-hist-back)
-    (if (not wn-org2-hist-forw) (user-error "No more forward history"))
-    (wn-org2-lookup (car wn-org2-hist-forw) t)))
-
+    (if (equal word wn-org2-hist-cur) (setq word (car wn-org2-hist-forw)))
+    (if (not word) (user-error "No more forward history"))
+    (wn-org2-lookup word t)))
 
 ;; FIXME: it should operate on a string, not on a buffer content
 (defun wn-org2-format-buffer ()
