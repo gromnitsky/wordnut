@@ -5,6 +5,7 @@ org-mode derived buffer.
 
 ## Features
 
+* Nothing to configure (except for optional custom keybindings).
 * 1 buffer `*WordNet*` for all query results.
 * Ido suggestions if wm finds the query too ambiguous.
 * Back/forward/view history.

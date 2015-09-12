@@ -103,6 +103,13 @@ The word at the point is suggested which can be replaced."
   (wn-org2-lookup word)
   )
 
+(defun wn-org2-fix-name (str)
+  (let ((max 10))
+    (if (> (length str) max)
+	(concat (substring str 0 max) "...")
+      str)
+    ))
+
 ;; If wm prints something to stdout it means the word is
 ;; found. Otherwise we run wn again but with its -grepX options. If
 ;; that returns nothing, bail out. If we get a list of words, show
@@ -112,7 +119,9 @@ The word at the point is suggested which can be replaced."
   (if (or (null word) (string-match "^\s*$" word)) (user-error "Invalid query"))
 
   (setq word (wn-org2-chomp word))
-  (let ((progress-reporter (make-progress-reporter "WordNet lookup... " 0 2))
+  (let ((progress-reporter
+	 (make-progress-reporter
+	  (format "WordNet lookup for `%s'... " (wn-org2-fix-name word)) 0 2))
 	result buf)
 
     (setq result (apply 'wn-org2-exec word wn-org2-cmd-options))
@@ -122,16 +131,17 @@ The word at the point is suggested which can be replaced."
 	;; recursion!
 	(wn-org2-lookup (wn-org2-suggest word))
       ;; else
+      (if (not dont-modify-history)
+	  (setq wn-org2-hist-back (wn-org2-hist-add word wn-org2-hist-back)))
+      (setq wn-org2-hist-cur word)
+
       (setq buf (get-buffer-create wn-org2-bufname))
       (with-current-buffer buf
 	(let ((inhibit-read-only t))
 	  (erase-buffer)
 	  (insert result))
-	(wn-org2-format-buffer))
-
-      (if (not dont-modify-history)
-	  (setq wn-org2-hist-back (wn-org2-hist-add word wn-org2-hist-back)))
-      (setq wn-org2-hist-cur word)
+	(wn-org2-format-buffer)
+	(wm-org2-headerline))
 
       (progress-reporter-update progress-reporter 2)
       (progress-reporter-done progress-reporter)
@@ -148,6 +158,21 @@ The word at the point is suggested which can be replaced."
       (split-window-vertically))
     (other-window 1)
     (switch-to-buffer buf)))
+
+(defun wm-org2-headerline ()
+  (let (get-hist-item fix-name)
+    (setq get-hist-item (lambda (list)
+			  (if (equal (car list) wn-org2-hist-cur)
+			      (nth 1 list) (car list))))
+    (setq header-line-format
+	  (format "Cur: %s,  BW: %s (%d), FW: %s (%d)"
+		  (wn-org2-fix-name wn-org2-hist-cur)
+		  (wn-org2-fix-name (funcall get-hist-item wn-org2-hist-back))
+		  (length wn-org2-hist-back)
+		  (wn-org2-fix-name (funcall get-hist-item wn-org2-hist-forw))
+		  (length wn-org2-hist-forw)
+		  )
+	  )))
 
 (defun wn-org2-hist-slice (list)
   (remove nil (cl-subseq list 0 wn-org2-hist-max)))
@@ -170,7 +195,7 @@ The word at the point is suggested which can be replaced."
   (interactive)
   (let ((items (append wn-org2-hist-back wn-org2-hist-forw)))
     (unless items (user-error "History is empty"))
-    (wn-org2-lookup (ido-completing-read "wm-org2 history: " items))
+    (wn-org2-lookup (ido-completing-read "wm-org2 history: " items) t)
     ))
 
 (defun wn-org2-history-backward ()
