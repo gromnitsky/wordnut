@@ -1,5 +1,7 @@
 ;; wn-org2.el -- Major mode interface to WordNet -*- lexical-binding: t -*-
 
+(require 'cl)
+
 (defconst wn-org2-meta-name "wm-org2")
 (defconst wn-org2-meta-version "0.0.1")
 
@@ -41,6 +43,7 @@
     "Coordinate" "Grep" "Similarity"
     "Entailment" "'Cause To'" "Sample" "Overview"))
 
+(defconst wn-org2-hist-max 20)
 (defvar wn-org2-hist-back '())
 (defvar wn-org2-hist-forw '())
 (defvar wn-org2-hist-cur nil)
@@ -127,7 +130,7 @@ The word at the point is suggested which can be replaced."
 	(wn-org2-format-buffer))
 
       (if (not dont-modify-history)
-	  (push word wn-org2-hist-back)) ; FIXME: auto-cut if too big, rm dups
+	  (setq wn-org2-hist-back (wn-org2-hist-add word wn-org2-hist-back)))
       (setq wn-org2-hist-cur word)
 
       (progress-reporter-update progress-reporter 2)
@@ -146,6 +149,16 @@ The word at the point is suggested which can be replaced."
     (other-window 1)
     (switch-to-buffer buf)))
 
+(defun wn-org2-hist-slice (list)
+  (remove nil (cl-subseq list 0 wn-org2-hist-max)))
+
+(defun wn-org2-hist-add (val list)
+  "Return a new list."
+  (if (member val list)
+      (wn-org2-hist-slice (cons val (remove val list)))
+    (wn-org2-hist-slice  (cons val list))
+    ))
+
 (defun wn-org2-history-clean ()
   (interactive)
   (setq wn-org2-hist-back '())
@@ -155,9 +168,9 @@ The word at the point is suggested which can be replaced."
 
 (defun wn-org2-lookup-history ()
   (interactive)
-  (let ((items (delete-dups (append wn-org2-hist-back wn-org2-hist-forw))))
+  (let ((items (append wn-org2-hist-back wn-org2-hist-forw)))
     (unless items (user-error "History is empty"))
-    (wn-org2-lookup (ido-completing-read "wm-org2 history: " items) t)
+    (wn-org2-lookup (ido-completing-read "wm-org2 history: " items))
     ))
 
 (defun wn-org2-history-backward ()
@@ -170,6 +183,7 @@ The word at the point is suggested which can be replaced."
     (if (not word) (user-error "No more backward history"))
     (wn-org2-lookup word t)))
 
+;; well...
 (defun wn-org2-history-forward ()
   (interactive)
   (unless wn-org2-hist-forw (user-error "No items in the forward history"))
@@ -179,6 +193,8 @@ The word at the point is suggested which can be replaced."
     (if (equal word wn-org2-hist-cur) (setq word (car wn-org2-hist-forw)))
     (if (not word) (user-error "No more forward history"))
     (wn-org2-lookup word t)))
+
+
 
 ;; FIXME: it should operate on a string, not on a buffer content
 (defun wn-org2-format-buffer ()

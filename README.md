@@ -23,6 +23,7 @@ In `~/.emacs`:
 There is no default global keybindings. Add something like:
 
 	(global-set-key [f12] 'wn-org2-search)
+	(global-set-key [(control f12)] 'wn-org2-lookup-current-word)
 
 to begin with.
 
@@ -36,11 +37,6 @@ kbd               | desc
 <kbd>r</kbd>      | Move forward in history
 <kbd>h</kbd>      | View history
 <kbd>q</kbd>      | Delete buffer
-
-## Bugs
-
-* History grows indefinitely.
-* Look Ma, no tests!
 
 ## Credits
 
