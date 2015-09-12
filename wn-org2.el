@@ -60,6 +60,7 @@ Turning on WordNet mode runs the normal hook `wn-org2-mode-hook'.
 (define-key wn-org2-mode-map (kbd "RET") 'wn-org2-lookup-current-word)
 (define-key wn-org2-mode-map (kbd "l") 'wn-org2-history-backward)
 (define-key wn-org2-mode-map (kbd "r") 'wn-org2-history-forward)
+(define-key wn-org2-mode-map (kbd "h") 'wn-org2-lookup-history)
 (define-key wn-org2-mode-map (kbd "/") 'wn-org2-search)
 
 ;; this mode is suitable only for specially formatted data
