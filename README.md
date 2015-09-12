@@ -28,12 +28,14 @@ to begin with.
 
 In the `*WordNet*` buffer:
 
-| <kbd>/</kbd>      | New search                     |
-| <kbd>Enter</kbd>  | Lookup a word under the cursor |
-| <kbd>l</kbd>      | Move backward in history       |
-| <kbd>r</kbd>      | Move forward in history        |
-| <kbd>h</kbd>      | View history                   |
-| <kbd>q</kbd>      | Delete buffer                  |
+kbd               | desc
+----------------- | -------------
+<kbd>/</kbd>      | New search
+<kbd>Enter</kbd>  | Lookup a word under the cursor
+<kbd>l</kbd>      | Move backward in history
+<kbd>r</kbd>      | Move forward in history
+<kbd>h</kbd>      | View history
+<kbd>q</kbd>      | Delete buffer
 
 ## Bugs
 
