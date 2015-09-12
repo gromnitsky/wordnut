@@ -188,6 +188,7 @@ The word at the point is suggested which can be replaced."
     (indent-region (point-min) (point-max))
     (fill-region (point-min) (point-max))
     (goto-char (point-min))
+    (show-all)
     ))
 
 ;; FIXME: remove after writing a proper `wn-org2-format'
