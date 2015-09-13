@@ -160,17 +160,22 @@ The word at the point is suggested which can be replaced."
     (switch-to-buffer buf)))
 
 (defun wm-org2-headerline ()
-  (let (get-hist-item fix-name)
+  (let (get-hist-item get-len)
     (setq get-hist-item (lambda (list)
-			  (if (equal (car list) wn-org2-hist-cur)
-			      (nth 1 list) (car list))))
+			  (or (if (equal (car list) wn-org2-hist-cur)
+				  (nth 1 list) (car list)) "∅")))
+    (setq get-len (lambda (list)
+		    (if (equal (car list) wn-org2-hist-cur)
+			(1- (length list))
+		      (length list))))
+
     (setq header-line-format
-	  (format "Cur: %s,  BW: %s (%d), FW: %s (%d)"
+	  (format "C: %s, ← %s (%d), → %s (%d)"
 		  (wn-org2-fix-name wn-org2-hist-cur)
 		  (wn-org2-fix-name (funcall get-hist-item wn-org2-hist-back))
-		  (length wn-org2-hist-back)
+		  (funcall get-len wn-org2-hist-back)
 		  (wn-org2-fix-name (funcall get-hist-item wn-org2-hist-forw))
-		  (length wn-org2-hist-forw)
+		  (funcall get-len wn-org2-hist-forw)
 		  )
 	  )))
 
@@ -179,10 +184,10 @@ The word at the point is suggested which can be replaced."
 
 (defun wn-org2-hist-add (val list)
   "Return a new list."
-  (if (member val list)
-      (wn-org2-hist-slice (cons val (remove val list)))
-    (wn-org2-hist-slice  (cons val list))
-    ))
+  (wn-org2-hist-slice (if (member val list)
+			  (cons val (remove val list))
+			(cons val list)
+			)))
 
 (defun wn-org2-history-clean ()
   (interactive)
@@ -203,7 +208,7 @@ The word at the point is suggested which can be replaced."
   (unless wn-org2-hist-back (user-error "No items in the back history"))
 
   (let ((word (pop wn-org2-hist-back)))
-    (push word wn-org2-hist-forw)
+    (setq wn-org2-hist-forw (wn-org2-hist-add word wn-org2-hist-forw))
     (if (equal word wn-org2-hist-cur) (setq word (car wn-org2-hist-back)))
     (if (not word) (user-error "No more backward history"))
     (wn-org2-lookup word t)))
@@ -214,7 +219,7 @@ The word at the point is suggested which can be replaced."
   (unless wn-org2-hist-forw (user-error "No items in the forward history"))
 
   (let ((word (pop wn-org2-hist-forw)))
-    (push word wn-org2-hist-back)
+    (setq wn-org2-hist-back (wn-org2-hist-add word wn-org2-hist-back))
     (if (equal word wn-org2-hist-cur) (setq word (car wn-org2-hist-forw)))
     (if (not word) (user-error "No more forward history"))
     (wn-org2-lookup word t)))
