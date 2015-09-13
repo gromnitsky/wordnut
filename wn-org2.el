@@ -6,8 +6,8 @@
 (defconst wn-org2-meta-version "0.0.1")
 
 (defconst wn-org2-bufname "*WordNet*")
-(defvar wn-org2-cmd "wn")
-(defvar wn-org2-cmd-options
+(defconst wn-org2-cmd "wn")
+(defconst wn-org2-cmd-options
   '("-over"
     "-antsn" "-antsv" "-antsa" "-antsr"
     "-hypen" "-hypev"
@@ -35,13 +35,13 @@
     "-hmern"
     "-hholn"))
 
-(defvar wn-org2-section-headings
+(defconst wn-org2-section-headings
   '("Antonyms" "Synonyms" "Hyponyms" "Troponyms"
     "Meronyms" "Holonyms" "Pertainyms"
     "Member" "Substance" "Part"
     "Attributes" "Derived" "Domain" "Familiarity"
     "Coordinate" "Grep" "Similarity"
-    "Entailment" "'Cause To'" "Sample" "Overview"))
+    "Entailment" "'Cause To'" "Sample" "Overview of"))
 
 (defconst wn-org2-hist-max 20)
 (defvar wn-org2-hist-back '())
@@ -50,8 +50,7 @@
 
 
 
-(define-derived-mode wn-org2-mode
-  org-mode "WordNet"
+(define-derived-mode wn-org2-mode outline-mode "WordNet"
   "Major mode interface to WordNet lexical database.
 Turning on WordNet mode runs the normal hook `wn-org2-mode-hook'.
 
@@ -141,6 +140,8 @@ The word at the point is suggested which can be replaced."
 	  (erase-buffer)
 	  (insert result))
 	(wn-org2-format-buffer)
+	(show-all)
+	(unless (eq major-mode 'wn-org2-mode) (wn-org2-mode))
 	(wm-org2-headerline))
 
       (progress-reporter-update progress-reporter 2)
@@ -224,39 +225,28 @@ The word at the point is suggested which can be replaced."
     (if (not word) (user-error "No more forward history"))
     (wn-org2-lookup word t)))
 
-
-
 ;; FIXME: it should operate on a string, not on a buffer content
 (defun wn-org2-format-buffer ()
   (let ((inhibit-read-only t))
-    (delete-matching-lines "^ *$" (point-min) (point-max))
-    (wn-org2-replace-regexp
-     (concat "^" (regexp-opt wn-org2-section-headings t)) "* \\1")
-
-    ;; Remove empty entries, those followed by a '*' on the next line
+    ;; delete the 1st empty line
     (goto-char (point-min))
-    (while (re-search-forward "^\\*.*\n\\*" nil t)
+    (delete-char 1)
+
+    ;; make headlines
+    (delete-matching-lines "^ +$" (point-min) (point-max))
+    (while (re-search-forward
+	    (concat "^" (regexp-opt wn-org2-section-headings t)) nil t)
+      (replace-match "* \\1"))
+
+    ;; remove empty entries
+    (goto-char (point-min))
+    (while (re-search-forward "^\\* .+\n\n\\*" nil t)
       (replace-match "*" t t)
-      ;; Back over the '*' to remove following empty entries
+      ;; back over the '*' to remove next matching lines
       (backward-char))
 
-    (wn-org2-replace-regexp "^Sense \\([1-9]*\\)" "  \\1. ")
-    (wn-org2-replace-regexp "       [=*]>" "    +")
-
-    (unless (eq major-mode 'wn-org2-mode)
-      (wn-org2-mode))
-    (indent-region (point-min) (point-max))
-    (fill-region (point-min) (point-max))
     (goto-char (point-min))
-    (show-all)
     ))
-
-;; FIXME: remove after writing a proper `wn-org2-format'
-(defun wn-org2-replace-regexp (regexp-string repl-string)
-  (goto-char (point-min))
-  (while (re-search-forward regexp-string nil t)
-    (replace-match repl-string t nil)))
-
 
 
 
