@@ -1,13 +1,13 @@
-;; wn-org2.el -- Major mode interface to WordNet -*- lexical-binding: t -*-
+;; wordnut.el -- Major mode interface to WordNet -*- lexical-binding: t -*-
 
 (require 'cl)
 
-(defconst wn-org2-meta-name "wm-org2")
-(defconst wn-org2-meta-version "0.0.1")
+(defconst wordnut-meta-name "wordnut")
+(defconst wordnut-meta-version "0.0.1")
 
-(defconst wn-org2-bufname "*WordNet*")
-(defconst wn-org2-cmd "wn")
-(defconst wn-org2-cmd-options
+(defconst wordnut-bufname "*WordNut*")
+(defconst wordnut-cmd "wn")
+(defconst wordnut-cmd-options
   '("-over"
     "-antsn" "-antsv" "-antsa" "-antsr"
     "-hypen" "-hypev"
@@ -35,7 +35,7 @@
     "-hmern"
     "-hholn"))
 
-(defconst wn-org2-section-headings
+(defconst wordnut-section-headings
   '("Antonyms" "Synonyms" "Hyponyms" "Troponyms"
     "Meronyms" "Holonyms" "Pertainyms"
     "Member" "Substance" "Part"
@@ -43,190 +43,190 @@
     "Coordinate" "Grep" "Similarity"
     "Entailment" "'Cause To'" "Sample" "Overview of"))
 
-(defconst wn-org2-hist-max 20)
-(defvar wn-org2-hist-back '())
-(defvar wn-org2-hist-forw '())
-(defvar wn-org2-hist-cur nil)
+(defconst wordnut-hist-max 20)
+(defvar wordnut-hist-back '())
+(defvar wordnut-hist-forw '())
+(defvar wordnut-hist-cur nil)
 
 
 
-(define-derived-mode wn-org2-mode outline-mode "WordNet"
+(define-derived-mode wordnut-mode outline-mode "WordNet"
   "Major mode interface to WordNet lexical database.
-Turning on WordNet mode runs the normal hook `wn-org2-mode-hook'.
+Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
 
-\\{wn-org2-mode-map}"
+\\{wordnut-mode-map}"
 
   (setq buffer-read-only t)
   (setq truncate-lines nil))
 
-(define-key wn-org2-mode-map (kbd "q") 'delete-window)
-(define-key wn-org2-mode-map (kbd "RET") 'wn-org2-lookup-current-word)
-(define-key wn-org2-mode-map (kbd "l") 'wn-org2-history-backward)
-(define-key wn-org2-mode-map (kbd "r") 'wn-org2-history-forward)
-(define-key wn-org2-mode-map (kbd "h") 'wn-org2-lookup-history)
-(define-key wn-org2-mode-map (kbd "/") 'wn-org2-search)
+(define-key wordnut-mode-map (kbd "q") 'delete-window)
+(define-key wordnut-mode-map (kbd "RET") 'wordnut-lookup-current-word)
+(define-key wordnut-mode-map (kbd "l") 'wordnut-history-backward)
+(define-key wordnut-mode-map (kbd "r") 'wordnut-history-forward)
+(define-key wordnut-mode-map (kbd "h") 'wordnut-lookup-history)
+(define-key wordnut-mode-map (kbd "/") 'wordnut-search)
 
 ;; this mode is suitable only for specially formatted data
-(put 'wn-org2-mode 'mode-class 'special)
+(put 'wordnut-mode 'mode-class 'special)
 
-(defun wn-org2-suggest (word)
+(defun wordnut-suggest (word)
   "ido suggestions"
   (if (string-match "^\s*$" word) (error "a non-empty string arg required"))
-  (setq word (wn-org2-chomp word))
+  (setq word (wordnut-chomp word))
 
-  (let ((result (wn-org2-exec word "-grepn" "-grepv" "-grepa" "-grepr"))
+  (let ((result (wordnut-exec word "-grepn" "-grepv" "-grepa" "-grepr"))
 	suggestions)
     (if (equal "" result) (user-error "Refine your query"))
 
     (setq result (split-string result "\n"))
-    (setq suggestions (wn-org2-filter (lambda (idx)
-				       (and
-					(not (string-prefix-p "Grep of " idx))
-					(not (equal idx ""))))
-				     result))
+    (setq suggestions (wordnut-filter (lambda (idx)
+					(and
+					 (not (string-prefix-p "Grep of " idx))
+					 (not (equal idx ""))))
+				      result))
     (ido-completing-read "WordNet: " suggestions)
     ))
 
-(defun wn-org2-exec (word &rest args)
+(defun wordnut-exec (word &rest args)
   "Like `system(3)' but only for wn(1)."
   (with-output-to-string
     (with-current-buffer
 	standard-output
-      (apply 'call-process wn-org2-cmd nil t nil word args)
+      (apply 'call-process wordnut-cmd nil t nil word args)
       )))
 
-(defun wn-org2-search (word)
+(defun wordnut-search (word)
   "Search WordNet for WORD if provided otherwise prompt for it.
 The word at the point is suggested which can be replaced."
   (interactive (list (read-string "WordNet: " (current-word))))
-  (wn-org2-lookup word)
+  (wordnut-lookup word)
   )
 
-(defun wn-org2-fix-name (str)
+(defun wordnut-fix-name (str)
   (let ((max 10))
     (if (> (length str) max)
 	(concat (substring str 0 max) "...")
       str)
     ))
 
-;; If wm prints something to stdout it means the word is
+;; If wn prints something to stdout it means the word is
 ;; found. Otherwise we run wn again but with its -grepX options. If
 ;; that returns nothing, bail out. If we get a list of words, show
-;; them to the user, then rerun `wn-org2-lookup' with the selected
+;; them to the user, then rerun `wordnut-lookup' with the selected
 ;; word.
-(defun wn-org2-lookup (word &optional dont-modify-history)
+(defun wordnut-lookup (word &optional dont-modify-history)
   (if (or (null word) (string-match "^\s*$" word)) (user-error "Invalid query"))
 
-  (setq word (wn-org2-chomp word))
+  (setq word (wordnut-chomp word))
   (let ((progress-reporter
 	 (make-progress-reporter
-	  (format "WordNet lookup for `%s'... " (wn-org2-fix-name word)) 0 2))
+	  (format "WordNet lookup for `%s'... " (wordnut-fix-name word)) 0 2))
 	result buf)
 
-    (setq result (apply 'wn-org2-exec word wn-org2-cmd-options))
+    (setq result (apply 'wordnut-exec word wordnut-cmd-options))
     (progress-reporter-update progress-reporter 1)
 
     (if (equal "" result)
 	;; recursion!
-	(wn-org2-lookup (wn-org2-suggest word))
+	(wordnut-lookup (wordnut-suggest word))
       ;; else
       (if (not dont-modify-history)
-	  (setq wn-org2-hist-back (wn-org2-hist-add word wn-org2-hist-back)))
-      (setq wn-org2-hist-cur word)
+	  (setq wordnut-hist-back (wordnut-hist-add word wordnut-hist-back)))
+      (setq wordnut-hist-cur word)
 
-      (setq buf (get-buffer-create wn-org2-bufname))
+      (setq buf (get-buffer-create wordnut-bufname))
       (with-current-buffer buf
 	(let ((inhibit-read-only t))
 	  (erase-buffer)
 	  (insert result))
-	(wn-org2-format-buffer)
+	(wordnut-format-buffer)
+	(unless (eq major-mode 'wordnut-mode) (wordnut-mode))
 	(show-all)
-	(unless (eq major-mode 'wn-org2-mode) (wn-org2-mode))
-	(wm-org2-headerline))
+	(wordnut-headerline))
 
       (progress-reporter-update progress-reporter 2)
       (progress-reporter-done progress-reporter)
-      (wn-org2-switch-to-buffer buf))
+      (wordnut-switch-to-buffer buf))
     ))
 
-(defun wn-org2-lookup-current-word ()
+(defun wordnut-lookup-current-word ()
   (interactive)
-  (wn-org2-lookup (current-word)))
+  (wordnut-lookup (current-word)))
 
-(defun wn-org2-switch-to-buffer (buf)
+(defun wordnut-switch-to-buffer (buf)
   (unless (eq (current-buffer) buf)
     (unless (cdr (window-list))
       (split-window-vertically))
     (other-window 1)
     (switch-to-buffer buf)))
 
-(defun wm-org2-headerline ()
+(defun wordnut-headerline ()
   (let (get-hist-item get-len)
     (setq get-hist-item (lambda (list)
-			  (or (if (equal (car list) wn-org2-hist-cur)
+			  (or (if (equal (car list) wordnut-hist-cur)
 				  (nth 1 list) (car list)) "∅")))
     (setq get-len (lambda (list)
-		    (if (equal (car list) wn-org2-hist-cur)
+		    (if (equal (car list) wordnut-hist-cur)
 			(1- (length list))
 		      (length list))))
 
     (setq header-line-format
 	  (format "C: %s, ← %s (%d), → %s (%d)"
-		  (wn-org2-fix-name wn-org2-hist-cur)
-		  (wn-org2-fix-name (funcall get-hist-item wn-org2-hist-back))
-		  (funcall get-len wn-org2-hist-back)
-		  (wn-org2-fix-name (funcall get-hist-item wn-org2-hist-forw))
-		  (funcall get-len wn-org2-hist-forw)
+		  (wordnut-fix-name wordnut-hist-cur)
+		  (wordnut-fix-name (funcall get-hist-item wordnut-hist-back))
+		  (funcall get-len wordnut-hist-back)
+		  (wordnut-fix-name (funcall get-hist-item wordnut-hist-forw))
+		  (funcall get-len wordnut-hist-forw)
 		  )
 	  )))
 
-(defun wn-org2-hist-slice (list)
-  (remove nil (cl-subseq list 0 wn-org2-hist-max)))
+(defun wordnut-hist-slice (list)
+  (remove nil (cl-subseq list 0 wordnut-hist-max)))
 
-(defun wn-org2-hist-add (val list)
+(defun wordnut-hist-add (val list)
   "Return a new list."
-  (wn-org2-hist-slice (if (member val list)
+  (wordnut-hist-slice (if (member val list)
 			  (cons val (remove val list))
 			(cons val list)
 			)))
 
-(defun wn-org2-history-clean ()
+(defun wordnut-history-clean ()
   (interactive)
-  (setq wn-org2-hist-back '())
-  (setq wn-org2-hist-forw '())
-  (setq wn-org2-hist-cur nil)
+  (setq wordnut-hist-back '())
+  (setq wordnut-hist-forw '())
+  (setq wordnut-hist-cur nil)
   )
 
-(defun wn-org2-lookup-history ()
+(defun wordnut-lookup-history ()
   (interactive)
-  (let ((items (append wn-org2-hist-back wn-org2-hist-forw)))
+  (let ((items (append wordnut-hist-back wordnut-hist-forw)))
     (unless items (user-error "History is empty"))
-    (wn-org2-lookup (ido-completing-read "wm-org2 history: " items) t)
+    (wordnut-lookup (ido-completing-read "wordnut history: " items) t)
     ))
 
-(defun wn-org2-history-backward ()
+(defun wordnut-history-backward ()
   (interactive)
-  (unless wn-org2-hist-back (user-error "No items in the back history"))
+  (unless wordnut-hist-back (user-error "No items in the back history"))
 
-  (let ((word (pop wn-org2-hist-back)))
-    (setq wn-org2-hist-forw (wn-org2-hist-add word wn-org2-hist-forw))
-    (if (equal word wn-org2-hist-cur) (setq word (car wn-org2-hist-back)))
+  (let ((word (pop wordnut-hist-back)))
+    (setq wordnut-hist-forw (wordnut-hist-add word wordnut-hist-forw))
+    (if (equal word wordnut-hist-cur) (setq word (car wordnut-hist-back)))
     (if (not word) (user-error "No more backward history"))
-    (wn-org2-lookup word t)))
+    (wordnut-lookup word t)))
 
 ;; well...
-(defun wn-org2-history-forward ()
+(defun wordnut-history-forward ()
   (interactive)
-  (unless wn-org2-hist-forw (user-error "No items in the forward history"))
+  (unless wordnut-hist-forw (user-error "No items in the forward history"))
 
-  (let ((word (pop wn-org2-hist-forw)))
-    (setq wn-org2-hist-back (wn-org2-hist-add word wn-org2-hist-back))
-    (if (equal word wn-org2-hist-cur) (setq word (car wn-org2-hist-forw)))
+  (let ((word (pop wordnut-hist-forw)))
+    (setq wordnut-hist-back (wordnut-hist-add word wordnut-hist-back))
+    (if (equal word wordnut-hist-cur) (setq word (car wordnut-hist-forw)))
     (if (not word) (user-error "No more forward history"))
-    (wn-org2-lookup word t)))
+    (wordnut-lookup word t)))
 
 ;; FIXME: it should operate on a string, not on a buffer content
-(defun wn-org2-format-buffer ()
+(defun wordnut-format-buffer ()
   (let ((inhibit-read-only t))
     ;; delete the 1st empty line
     (goto-char (point-min))
@@ -235,7 +235,7 @@ The word at the point is suggested which can be replaced."
     ;; make headlines
     (delete-matching-lines "^ +$" (point-min) (point-max))
     (while (re-search-forward
-	    (concat "^" (regexp-opt wn-org2-section-headings t)) nil t)
+	    (concat "^" (regexp-opt wordnut-section-headings t)) nil t)
       (replace-match "* \\1"))
 
     ;; remove empty entries
@@ -251,16 +251,16 @@ The word at the point is suggested which can be replaced."
 
 
 ;; emacswiki.org
-(defun wn-org2-filter (condp lst)
+(defun wordnut-filter (condp lst)
   (delq nil
 	(mapcar (lambda (x) (and (funcall condp x) x)) lst)))
 
 ;; emacswiki.org
-(defun wn-org2-chomp (str)
+(defun wordnut-chomp (str)
   "Chomp leading and tailing whitespace from STR."
   (replace-regexp-in-string (rx (or (: bos (* (any " \t\n")))
 				    (: (* (any " \t\n")) eos)))
 			    ""
 			    str))
 
-(provide 'wn-org2)
+(provide 'wordnut)
