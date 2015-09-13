@@ -245,6 +245,11 @@ The word at the point is suggested which can be replaced."
       ;; back over the '*' to remove next matching lines
       (backward-char))
 
+    ;; remove the last empty entry
+    (goto-char (point-max))
+    (if (re-search-backward "^\\* .+\n\\'" nil t)
+	(replace-match "" t t))
+
     (goto-char (point-min))
     ))
 
