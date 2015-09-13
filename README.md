@@ -10,7 +10,7 @@ outline-mode derived buffer.
 * Ido suggestions if wn(1) finds the query too ambiguous.
 * Back/forward/view history.
 
-![A screenshot of running wordnut](https://raw.github.com/gromnitsky/wordnut/master/screnshot1.png)
+![A screenshot of running wordnut](https://raw.github.com/gromnitsky/wordnut/master/screenshot1.png)
 
 ## Installation
 
@@ -48,6 +48,7 @@ mode.
 
 ## Bugs
 
+* ≈ 8KB .el size is too much for such a small major mode.
 * Tested only w/ wordnet-3.0 on Fedora 22.
 
 ## License
