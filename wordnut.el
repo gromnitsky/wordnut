@@ -203,28 +203,26 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
     (wordnut-lookup (ido-completing-read "wordnut history: " items) t)
     ))
 
+(defmacro wordnut-hist-exctract (desc from to)
+  `(let (word)
+     (unless ,from (user-error "The %s history is ∅" ,desc))
+
+     ;; move the item from FROM to TO
+     (setq word (pop ,from))
+     (setq ,to (wordnut-hist-add word ,to))
+
+     (if (equal word wordnut-hist-cur) (setq word (car ,from)))
+     (unless word (user-error "No more %s history" ,desc))
+     (wordnut-lookup word t)))
+
 (defun wordnut-history-backward ()
   (interactive)
-  (unless wordnut-hist-back (user-error "No items in the back history"))
+  (wordnut-hist-exctract "backward" wordnut-hist-back wordnut-hist-forw))
 
-  (let ((word (pop wordnut-hist-back)))
-    (setq wordnut-hist-forw (wordnut-hist-add word wordnut-hist-forw))
-    (if (equal word wordnut-hist-cur) (setq word (car wordnut-hist-back)))
-    (if (not word) (user-error "No more backward history"))
-    (wordnut-lookup word t)))
-
-;; meet the evil twin!
 (defun wordnut-history-forward ()
   (interactive)
-  (unless wordnut-hist-forw (user-error "No items in the forward history"))
+  (wordnut-hist-exctract "forward" wordnut-hist-forw wordnut-hist-back))
 
-  (let ((word (pop wordnut-hist-forw)))
-    (setq wordnut-hist-back (wordnut-hist-add word wordnut-hist-back))
-    (if (equal word wordnut-hist-cur) (setq word (car wordnut-hist-forw)))
-    (if (not word) (user-error "No more forward history"))
-    (wordnut-lookup word t)))
-
-;; FIXME: it should operate on a string, not on a buffer content
 (defun wordnut-format-buffer ()
   (let ((inhibit-read-only t))
     ;; delete the 1st empty line

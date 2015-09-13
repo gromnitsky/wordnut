@@ -32,7 +32,7 @@
 
   (should (equal
 	   (nth 1 (should-error (wordnut-history-backward)))
-	   "No items in the back history"))
+	   "The backward history is ∅"))
 
   (wordnut-lookup "2")
   (wordnut-lookup "3")
