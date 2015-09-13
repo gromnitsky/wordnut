@@ -1,6 +1,6 @@
 ;; wordnut.el -- Major mode interface to WordNet -*- lexical-binding: t -*-
 
-(require 'cl)
+(require 'cl-lib)
 
 (defconst wordnut-meta-name "wordnut")
 (defconst wordnut-meta-version "0.0.1")
@@ -97,11 +97,9 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
       )))
 
 (defun wordnut-search (word)
-  "Search WordNet for WORD if provided otherwise prompt for it.
-The word at the point is suggested which can be replaced."
+  "Prompt for a word to search for, then do the lookup."
   (interactive (list (read-string "WordNet: " (current-word))))
-  (wordnut-lookup word)
-  )
+  (wordnut-lookup word))
 
 (defun wordnut-fix-name (str)
   (let ((max 10))
@@ -215,7 +213,7 @@ The word at the point is suggested which can be replaced."
     (if (not word) (user-error "No more backward history"))
     (wordnut-lookup word t)))
 
-;; well...
+;; meet the evil twin!
 (defun wordnut-history-forward ()
   (interactive)
   (unless wordnut-hist-forw (user-error "No items in the forward history"))
