@@ -21,7 +21,7 @@
 (ert-deftest history-back-forw()
   (wordnut-history-clean)
 
-  (wordnut-lookup "1")
+  (wordnut--lookup "1")
   (should (equal
 	   (nth 1 (should-error (wordnut-history-backward)))
 	   "No more backward history"))
@@ -34,8 +34,8 @@
 	   (nth 1 (should-error (wordnut-history-backward)))
 	   "The backward history is ∅"))
 
-  (wordnut-lookup "2")
-  (wordnut-lookup "3")
+  (wordnut--lookup "2")
+  (wordnut--lookup "3")
   (wordnut-history-forward)
 
   (should (equal wordnut-hist-cur "1"))
@@ -62,14 +62,14 @@
 (ert-deftest history-dups()
   (wordnut-history-clean)
 
-  (wordnut-lookup "1")
-  (wordnut-lookup "1")
+  (wordnut--lookup "1")
+  (wordnut--lookup "1")
 
   (should (equal wordnut-hist-back '("1")) )
 
-  (wordnut-lookup "2")
-  (wordnut-lookup "3")
-  (wordnut-lookup "1")
+  (wordnut--lookup "2")
+  (wordnut--lookup "3")
+  (wordnut--lookup "1")
 
   (should (equal wordnut-hist-back '("1" "3" "2")) )
   )
@@ -79,12 +79,12 @@
   (let ((oldmax wordnut-hist-max))
     (setq wordnut-hist-max 4)
 
-    (wordnut-lookup "1")
-    (wordnut-lookup "2")
-    (wordnut-lookup "3")
-    (wordnut-lookup "4")
-    (wordnut-lookup "5")
-    (wordnut-lookup "6")
+    (wordnut--lookup "1")
+    (wordnut--lookup "2")
+    (wordnut--lookup "3")
+    (wordnut--lookup "4")
+    (wordnut--lookup "5")
+    (wordnut--lookup "6")
 
     (should (equal wordnut-hist-back '("6" "5" "4" "3")) )
     (setq wordnut-hist-max oldmax)
