@@ -49,6 +49,7 @@
 (defvar wordnut-hist-back '())
 (defvar wordnut-hist-forw '())
 (defvar wordnut-hist-cur nil)
+(defvar wordnut-completion-hist '())
 
 
 
@@ -71,23 +72,26 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
 ;; this mode is suitable only for specially formatted data
 (put 'wordnut-mode 'mode-class 'special)
 
-(defun wordnut--suggest (word)
-  "ido suggestions"
-  (if (string-match "^\s*$" word) (error "a non-empty string arg required"))
-  (setq word (wordnut--chomp word))
+(defun wordnut--completing (input)
+  (let ((completion-ignore-case t))
+    (completing-read "WordNut: "
+		     (completion-table-dynamic 'wordnut--suggestions)
+		     nil nil input 'wordnut-completion-hist)))
 
-  (let ((result (wordnut--exec word "-grepn" "-grepv" "-grepa" "-grepr"))
-	suggestions)
-    (if (equal "" result) (user-error "Refine your query"))
-
-    (setq result (split-string result "\n"))
-    (setq suggestions (wordnut--filter (lambda (idx)
-					 (and
-					  (not (string-prefix-p "Grep of " idx))
-					  (not (equal idx ""))))
-				       result))
-    (ido-completing-read "WordNet: " suggestions)
-    ))
+(defun wordnut--suggestions (input)
+  (if (not (string-match "^\s*$" input))
+      (progn
+	(setq input (wordnut--chomp input))
+	(let ((result (wordnut--exec input "-grepn" "-grepv" "-grepa" "-grepr")))
+	  (if (equal "" result)
+	      nil				; no match
+	    (setq result (split-string result "\n"))
+	    (wordnut--filter (lambda (idx)
+			       (and
+				(not (string-prefix-p "Grep of " idx))
+				(not (equal idx ""))))
+			     result))
+	  ))))
 
 (defun wordnut--exec (word &rest args)
   "Like `system(3)' but only for wn(1)."
@@ -99,7 +103,7 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
 
 (defun wordnut-search (word)
   "Prompt for a word to search for, then do the lookup."
-  (interactive (list (read-string "WordNet: " (current-word))))
+  (interactive (list (wordnut--completing (current-word))))
   (wordnut--lookup word))
 
 (defun wordnut--fix-name (str)
@@ -109,12 +113,11 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
       str)
     ))
 
-;; If wn prints something to stdout it means the word is
-;; found. Otherwise we run wn again but with its -grepX options. If
-;; that returns nothing, bail out. If we get a list of words, show
-;; them to the user, then rerun `wordnut--lookup' with the selected
-;; word.
 (defun wordnut--lookup (word &optional dont-modify-history)
+  "If wn prints something to stdout it means the word is
+found. Otherwise we run wn again but with its -grepX options. If
+that returns nothing or a list of words, prompt for a word, then
+rerun `wordnut--lookup' with the selected word."
   (if (or (null word) (string-match "^\s*$" word)) (user-error "Invalid query"))
 
   (setq word (wordnut--chomp word))
@@ -127,8 +130,11 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
     (progress-reporter-update progress-reporter 1)
 
     (if (equal "" result)
-	;; recursion!
-	(wordnut--lookup (wordnut--suggest word) dont-modify-history)
+	(let (sugg)
+	  (setq sugg (wordnut--suggestions word))
+	  (setq word (if (listp sugg) (wordnut--completing word) sugg))
+	  ;; recursion!
+	  (wordnut--lookup word dont-modify-history))
       ;; else
       (if (not dont-modify-history)
 	  (setq wordnut-hist-back (wordnut--hist-add word wordnut-hist-back)))

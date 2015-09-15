@@ -7,7 +7,7 @@ outline-mode derived buffer.
 
 * Nothing to configure (except for optional custom keybindings).
 * 1 buffer `*WordNut*` for all query results.
-* Ido suggestions if wn(1) finds the query too ambiguous.
+* Completion if wn(1) finds the query too ambiguous.
 * Back/forward/view history.
 
 ![A screenshot of running wordnut](https://raw.github.com/gromnitsky/wordnut/master/screenshot1.png)
