@@ -178,7 +178,7 @@ rerun `wordnut--lookup' with the selected word."
 
     (setq header-line-format
 	  (format "C: %s, ← %s (%d), → %s (%d)"
-		  (wordnut--fix-name wordnut-hist-cur)
+		  (propertize (wordnut--fix-name wordnut-hist-cur) 'face 'bold)
 		  (wordnut--fix-name (funcall get-hist-item wordnut-hist-back))
 		  (funcall get-len wordnut-hist-back)
 		  (wordnut--fix-name (funcall get-hist-item wordnut-hist-forw))
