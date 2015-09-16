@@ -103,7 +103,7 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
 
 (defun wordnut-search (word)
   "Prompt for a word to search for, then do the lookup."
-  (interactive (list (wordnut--completing (current-word))))
+  (interactive (list (wordnut--completing (current-word t t))))
   (wordnut--lookup word))
 
 (defun wordnut--fix-name (str)
