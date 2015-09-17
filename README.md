@@ -10,6 +10,13 @@ outline-mode derived buffer.
 * 1 buffer `*WordNut*` for all query results.
 * Back/forward/view history.
 
+## Requirements
+
+* Emacs 24.4+
+* wn(1) in `PATH`
+* (optionally)
+  [adaptive-wrap](http://elpa.gnu.org/packages/adaptive-wrap.html)
+
 ![A screenshot of running wordnut](https://raw.github.com/gromnitsky/wordnut/master/screenshot1.png)
 
 ## Installation
@@ -21,10 +28,8 @@ In `~/.emacs`:
 	(add-to-list 'load-path "/the/dir/with/the/repo")
 	(require 'wordnut)
 
-If you have
-[adaptive-wrap](http://elpa.gnu.org/packages/adaptive-wrap.html) mode
-installed, wordnut will automatically use it to improve the text
-formatting.
+If you have adaptive-wrap mode installed, wordnut will automatically
+use it to improve the text formatting.
 
 ## Keyboard shortcuts
 
@@ -37,15 +42,14 @@ to begin with.
 
 In the `*WordNut*` buffer:
 
-kbd               | desc
------------------ | -------------
-<kbd>Enter</kbd>  | Lookup a word under the cursor
-<kbd>o</kbd>      | A tooltip w/ a `sense` for the current `lexical category`
-<kbd>/</kbd>      | New search
-<kbd>l</kbd>      | Move backward in history
-<kbd>r</kbd>      | Move forward in history
-<kbd>h</kbd>      | View history
-<kbd>q</kbd>      | Hide buffer
+kbd                        | desc
+-------------------------- | -------------
+<kbd>Enter</kbd>           | Lookup a word under the cursor
+<kbd>o</kbd>               | A tooltip w/ a _sense_ for the current _lexical category_
+<kbd>/</kbd>               | New search
+<kbd>l</kbd>, <kbd>r</kbd> | Move backward/forward in history
+<kbd>h</kbd>               | View history
+<kbd>q</kbd>               | Hide buffer
 
 Auxiliary:
 
@@ -56,11 +60,6 @@ kbd                                  | desc
 <kbd>Space</kbd>                     | PageDown
 <kbd>b</kbd>, <kbd>Backspace</kbd>   | PageUp
 
-## Credits
-
-The inspiration was [wn-org.el](http://emacswiki.org/emacs/wn-org.el)
-mode.
-
 ## Bugs
 
 * ≈ 14KB .el size is too much for such a small major mode.
@@ -70,6 +69,12 @@ mode.
 
 * Display a lexical category in the echo area akin to eldoc.
 * Expand inline references to another word.
+* Save buffer position in history.
+
+## Credits
+
+The inspiration was [wn-org.el](http://emacswiki.org/emacs/wn-org.el)
+mode.
 
 ## License
 
