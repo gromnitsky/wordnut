@@ -2,6 +2,7 @@
 
 (require 'cl-lib)
 (require 'outline)
+(require 'imenu)
 
 (defconst wordnut-meta-name "wordnut")
 (defconst wordnut-meta-version "0.0.1")
@@ -63,6 +64,11 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
   (setq truncate-lines nil)
   (setq-local visual-line-fringe-indicators '(nil top-right-angle))
   (visual-line-mode 1)
+
+  ;; we make a custom imenu index
+  (setq imenu-generic-expression nil)
+  (setq-local imenu-create-index-function 'wordnut--imenu-make-index)
+  (imenu-add-menubar-index)
 
   ;; if user has adaptive-wrap mode installed, use it
   (if (fboundp 'adaptive-wrap-prefix-mode)
@@ -162,6 +168,7 @@ rerun `wordnut--lookup' with the selected word."
 	  (erase-buffer)
 	  (insert result))
 	(wordnut--format-buffer)
+	(setq imenu--index-alist nil)	; flush imenu cache
 	(set-buffer-modified-p nil)
 	(unless (eq major-mode 'wordnut-mode) (wordnut-mode))
 	(show-all)
@@ -247,13 +254,24 @@ rerun `wordnut--lookup' with the selected word."
   (interactive)
   (wordnut-hist--extract "forward" wordnut-hist-forw wordnut-hist-back))
 
+(defun wordnut--imenu-make-index ()
+  (let ((index '()) marker)
+    (save-excursion
+      (while (re-search-forward "^\\* \\(.+\\)$" nil t)
+	(setq marker (make-marker))
+	(set-marker marker (line-beginning-position))
+	(push `(,(match-string 1) . ,marker) index))
+
+      (reverse index))))
+
 (defun wordnut--format-buffer ()
-  (let ((inhibit-read-only t))
+  (let ((inhibit-read-only t)
+	(case-fold-search nil))
     ;; delete the 1st empty line
     (goto-char (point-min))
     (delete-char 1)
 
-    ;; make headlines
+    ;; make headings
     (delete-matching-lines "^ +$" (point-min) (point-max))
     (while (re-search-forward
 	    (concat "^" (regexp-opt wordnut-section-headings t)) nil t)
@@ -265,6 +283,11 @@ rerun `wordnut--lookup' with the selected word."
       (replace-match "*" t t)
       ;; back over the '*' to remove next matching lines
       (backward-char))
+
+    ;; make sections
+    (goto-char (point-min))
+    (while (re-search-forward "^Sense [0-9]+" nil t)
+      (replace-match "** \\&"))
 
     ;; remove the last empty entry
     (goto-char (point-max))
