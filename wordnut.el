@@ -1,6 +1,7 @@
 ;; wordnut.el -- Major mode interface to WordNet -*- lexical-binding: t -*-
 
 (require 'cl-lib)
+(require 'subr-x)
 (require 'outline)
 (require 'imenu)
 
@@ -104,7 +105,7 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
 (defun wordnut--suggestions (input)
   (if (not (string-match "^\s*$" input))
       (progn
-	(setq input (wordnut--chomp input))
+	(setq input (string-trim input))
 	(let ((result (wordnut--exec input "-grepn" "-grepv" "-grepa" "-grepr")))
 	  (if (equal "" result)
 	      nil				; no match
@@ -143,7 +144,7 @@ that returns nothing or a list of words, prompt for a word, then
 rerun `wordnut--lookup' with the selected word."
   (if (or (null word) (string-match "^\s*$" word)) (user-error "Invalid query"))
 
-  (setq word (wordnut--chomp word))
+  (setq word (string-trim word))
   (let ((progress-reporter
 	 (make-progress-reporter
 	  (format "WordNet lookup for `%s'... " (wordnut--fix-name word)) 0 2))
@@ -359,7 +360,7 @@ Return a list '(cat sense desc)."
       (re-search-forward (format "^\\* Overview of %s" cat) nil t)
       (next-line)
       (re-search-forward (format "%s\\. " sense) nil t)
-      (setq desc (wordnut--chomp
+      (setq desc (string-trim
 		  (substring-no-properties (thing-at-point 'line))))
 
       (unless desc (user-error "Failed to extract an overview"))
@@ -407,13 +408,5 @@ for a query. For example, return 'do' instead of 'did'."
 (defun wordnut--filter (condp lst)
   (delq nil
 	(mapcar (lambda (x) (and (funcall condp x) x)) lst)))
-
-;; emacswiki.org
-(defun wordnut--chomp (str)
-  "Chomp leading and tailing whitespace from STR."
-  (replace-regexp-in-string (rx (or (: bos (* (any " \t\n")))
-				    (: (* (any " \t\n")) eos)))
-			    ""
-			    str))
 
 (provide 'wordnut)
