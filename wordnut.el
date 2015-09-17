@@ -301,7 +301,7 @@ rerun `wordnut--lookup' with the selected word."
 
 
 (defun wordnut--lexi-cat ()
-  "Return a lexical category of the current heading."
+  "Return a category name for the current lexical category."
   (let (line match)
     (save-excursion
       (ignore-errors
@@ -314,7 +314,7 @@ rerun `wordnut--lookup' with the selected word."
       )))
 
 (defun wordnut--lexi-sense ()
-  "Return a sense number of the current heading."
+  "Return a sense number for the current lexical category."
   (let (line match)
     (save-excursion
       (ignore-errors
@@ -326,8 +326,8 @@ rerun `wordnut--lookup' with the selected word."
       (match-string 1 line)
       )))
 
-(defun wordnut--lexi-info-at-line ()
-  "Return a list (word cat sense) of the current line."
+(defun wordnut--lexi-info-inline ()
+  "Return a list '(word cat sense) from the current line or nil."
   (let ((line (substring-no-properties (thing-at-point 'line))))
     (if (string-match "->\\((.+)\\)? \\(.+\\)#\\([0-9]+\\)" line)
 	(list (match-string 2 line)
@@ -337,11 +337,13 @@ rerun `wordnut--lookup' with the selected word."
       nil)))
 
 (defun wordnut--lexi-overview ()
-  "Try to locale an overview heading & extract its string description.
-Return a list (cat sense desc)."
+  "Try to locale an 'Overview' heading to extract a 'sense'
+of a current lexical category.
+
+Return a list '(cat sense desc)."
   (let (desc cat sense inline)
     (save-excursion
-      (setq inline (wordnut--lexi-info-at-line))
+      (setq inline (wordnut--lexi-info-inline))
       (if inline
 	  (if (equal (car inline) (wordnut--lexi-word))
 	      (progn
@@ -375,7 +377,7 @@ for a query. For example, return 'do' instead of 'did'."
      (replace-regexp-in-string "_" " " (match-string 1)))))
 
 (defun wordnut-show-overview ()
-  "Show a tooltip with a sense definition for the current heading."
+  "Show a tooltip of a 'sense' for the current lexical category."
   (interactive)
   (let ((buf (get-buffer wordnut-bufname)) desc)
     (unless buf (user-error "Has %s buffer been killed?" wordnut-bufname))
