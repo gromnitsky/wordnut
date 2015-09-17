@@ -82,6 +82,7 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
 (define-key wordnut-mode-map (kbd "r") 'wordnut-history-forward)
 (define-key wordnut-mode-map (kbd "h") 'wordnut-lookup-history)
 (define-key wordnut-mode-map (kbd "/") 'wordnut-search)
+(define-key wordnut-mode-map (kbd "o") 'wordnut-show-overview)
 
 (define-key wordnut-mode-map [(meta down)] 'outline-next-visible-heading)
 (define-key wordnut-mode-map [(meta up)] 'outline-previous-visible-heading)
@@ -298,6 +299,107 @@ rerun `wordnut--lookup' with the selected word."
     ))
 
 
+
+(defun wordnut--lexi-cat ()
+  "Return a lexical category of the current heading."
+  (let (line match)
+    (save-excursion
+      (ignore-errors
+	(outline-up-heading 1))
+      (setq line (substring-no-properties (thing-at-point 'line)))
+      (unless (string-match " of \\(noun\\|verb\\|adj\\|adv\\)" line)
+	(user-error "Cannot extract a lexical category"))
+
+      (match-string 1 line)
+      )))
+
+(defun wordnut--lexi-sense ()
+  "Return a sense number of the current heading."
+  (let (line match)
+    (save-excursion
+      (ignore-errors
+	(outline-up-heading -1))
+      (setq line (substring-no-properties (thing-at-point 'line)))
+      (unless (string-match "Sense \\([0-9]+\\)" line)
+	(user-error "Cannot extract a sense number; move the cursor to the proper place first"))
+
+      (match-string 1 line)
+      )))
+
+(defun wordnut--lexi-info-at-line ()
+  "Return a list (word cat sense) of the current line."
+  (let ((line (substring-no-properties (thing-at-point 'line))))
+    (if (string-match "->\\((.+)\\)? \\(.+\\)#\\([0-9]+\\)" line)
+	(list (match-string 2 line)
+	      (if (match-string 1 line)
+		  (replace-regexp-in-string "[()]" "" (match-string 1 line)))
+	      (match-string 3 line))
+      nil)))
+
+(defun wordnut--lexi-overview ()
+  "Try to locale an overview heading & extract its string description.
+Return a list (cat sense desc)."
+  (let (desc cat sense inline)
+    (save-excursion
+      (setq inline (wordnut--lexi-info-at-line))
+      (if inline
+	  (if (equal (car inline) (wordnut--lexi-word))
+	      (progn
+		(setq cat (nth 1 inline))
+		(setq sense (nth 2 inline)))
+	    ;; FIXME
+	    (user-error "Inline reference extraction is not implemented")))
+
+      (setq cat (or cat (wordnut--lexi-cat)))
+      (setq sense (or sense (wordnut--lexi-sense)))
+
+      (goto-char (point-min))
+      (re-search-forward (format "^\\* Overview of %s" cat) nil t)
+      (next-line)
+      (re-search-forward (format "%s\\. " sense) nil t)
+      (setq desc (wordnut--chomp
+		  (substring-no-properties (thing-at-point 'line))))
+
+      (unless desc (user-error "Failed to extract an overview"))
+      (list cat sense desc)
+      )))
+
+(defun wordnut--lexi-word ()
+  "Return an actual displayed word, not what a user has typed
+for a query. For example, return 'do' instead of 'did'."
+  (save-excursion
+    (goto-char (point-min))
+    (unless (re-search-forward "^\\* Overview of [^ ]+ \\(.+\\)$" nil t)
+      (user-error "Cannot extract the actual current word"))
+    (substring-no-properties
+     (replace-regexp-in-string "_" " " (match-string 1)))))
+
+(defun wordnut-show-overview ()
+  "Show a tooltip with a sense definition for the current heading."
+  (interactive)
+  (let ((buf (get-buffer wordnut-bufname)) desc)
+    (unless buf (user-error "Has %s buffer been killed?" wordnut-bufname))
+
+    (with-current-buffer buf
+      (setq desc (wordnut--lexi-overview))
+      (tooltip-show (wordnut--word-wrap
+		     (+ (/ (window-body-width) 2) (/ (window-body-width) 4))
+		     (format "OVERVIEW `%s', %s\n\n%s"
+			     (wordnut--fix-name (wordnut--lexi-word))
+			     (car desc) (nth 2 desc)
+			     )))
+      )))
+
+
+
+;; s.el
+(defun wordnut--word-wrap (len s)
+  "If S is longer than LEN, wrap the words with newlines."
+  (with-temp-buffer
+    (insert s)
+    (let ((fill-column len))
+      (fill-region (point-min) (point-max)))
+    (buffer-substring-no-properties (point-min) (point-max))))
 
 ;; emacswiki.org
 (defun wordnut--filter (condp lst)
