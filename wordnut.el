@@ -77,6 +77,14 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
 (define-key wordnut-mode-map (kbd "h") 'wordnut-lookup-history)
 (define-key wordnut-mode-map (kbd "/") 'wordnut-search)
 
+(define-key wordnut-mode-map [(meta down)] 'outline-next-visible-heading)
+(define-key wordnut-mode-map [(meta up)] 'outline-previous-visible-heading)
+(define-key wordnut-mode-map (kbd "TAB") 'outline-toggle-children)
+
+(define-key wordnut-mode-map (kbd "b") 'scroll-down-command)
+(define-key wordnut-mode-map (kbd "DEL") 'scroll-down-command)
+(define-key wordnut-mode-map (kbd "SPC") 'scroll-up-command)
+
 ;; this mode is suitable only for specially formatted data
 (put 'wordnut-mode 'mode-class 'special)
 
