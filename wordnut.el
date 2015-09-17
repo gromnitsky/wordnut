@@ -53,14 +53,22 @@
 
 
 
-(define-derived-mode wordnut-mode outline-mode "WordNet"
+(define-derived-mode wordnut-mode outline-mode "WordNut"
   "Major mode interface to WordNet lexical database.
 Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
 
 \\{wordnut-mode-map}"
 
   (setq buffer-read-only t)
-  (setq truncate-lines nil))
+  (setq truncate-lines nil)
+  (setq-local visual-line-fringe-indicators '(nil top-right-angle))
+  (visual-line-mode 1)
+
+  ;; if user has adaptive-wrap mode installed, use it
+  (if (fboundp 'adaptive-wrap-prefix-mode)
+      (progn
+	(setq adaptive-wrap-extra-indent 3)
+	(adaptive-wrap-prefix-mode 1))))
 
 (define-key wordnut-mode-map (kbd "q") 'delete-window)
 (define-key wordnut-mode-map (kbd "RET") 'wordnut-lookup-current-word)
@@ -146,6 +154,7 @@ rerun `wordnut--lookup' with the selected word."
 	  (erase-buffer)
 	  (insert result))
 	(wordnut--format-buffer)
+	(set-buffer-modified-p nil)
 	(unless (eq major-mode 'wordnut-mode) (wordnut-mode))
 	(show-all)
 	(wordnut--headerline))
