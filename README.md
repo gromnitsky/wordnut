@@ -6,8 +6,8 @@ outline-mode derived buffer.
 ## Features
 
 * Nothing to configure (except for optional custom keybindings).
+* **Completion** if wn(1) finds the query too ambiguous.
 * 1 buffer `*WordNut*` for all query results.
-* Completion if wn(1) finds the query too ambiguous.
 * Back/forward/view history.
 
 ![A screenshot of running wordnut](https://raw.github.com/gromnitsky/wordnut/master/screenshot1.png)
@@ -20,6 +20,10 @@ In `~/.emacs`:
 
 	(add-to-list 'load-path "/the/dir/with/the/repo")
 	(require 'wordnut)
+
+If you have
+[adaptive-wrap](http://elpa.gnu.org/packages/adaptive-wrap.html) mode
+installed, wordnut will automatically use to improve text formatting.
 
 ## Keyboard shortcuts
 
@@ -34,12 +38,12 @@ In the `*WordNut*` buffer:
 
 kbd               | desc
 ----------------- | -------------
-<kbd>/</kbd>      | New search
 <kbd>Enter</kbd>  | Lookup a word under the cursor
+<kbd>/</kbd>      | New search
 <kbd>l</kbd>      | Move backward in history
 <kbd>r</kbd>      | Move forward in history
 <kbd>h</kbd>      | View history
-<kbd>q</kbd>      | Delete buffer
+<kbd>q</kbd>      | Hide buffer
 
 ## Credits
 
@@ -48,7 +52,7 @@ mode.
 
 ## Bugs
 
-* ≈ 8KB .el size is too much for such a small major mode.
+* ≈ 8.3KB .el size is too much for such a small major mode.
 * Tested only w/ wordnet-3.0 on Fedora 22.
 
 ## License
