@@ -45,6 +45,15 @@ kbd               | desc
 <kbd>h</kbd>      | View history
 <kbd>q</kbd>      | Hide buffer
 
+Auxiliary:
+
+kbd                                  | desc
+------------------------------------ | -------------
+<kbd>Tab</kbd>                       | Toggle heading/section visibility
+<kbd>M-Up</kbd>, <kbd>M-Down</kbd>   | Move between sections
+<kbd>Space</kbd>                     | PageDown
+<kbd>b</kbd>, <kbd>Backspace</kbd>   | PageUp
+
 ## Credits
 
 The inspiration was [wn-org.el](http://emacswiki.org/emacs/wn-org.el)
@@ -52,8 +61,12 @@ mode.
 
 ## Bugs
 
-* ≈ 8.3KB .el size is too much for such a small major mode.
+* ≈ 10KB .el size is too much for such a small major mode.
 * Tested only w/ wordnet-3.0 on Fedora 22.
+
+## TODO
+
+* Cross-link 'senses' in each heading with 'Overview'.
 
 ## License
 
