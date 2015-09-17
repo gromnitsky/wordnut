@@ -23,7 +23,8 @@ In `~/.emacs`:
 
 If you have
 [adaptive-wrap](http://elpa.gnu.org/packages/adaptive-wrap.html) mode
-installed, wordnut will automatically use to improve text formatting.
+installed, wordnut will automatically use it to improve the text
+formatting.
 
 ## Keyboard shortcuts
 
@@ -39,6 +40,7 @@ In the `*WordNut*` buffer:
 kbd               | desc
 ----------------- | -------------
 <kbd>Enter</kbd>  | Lookup a word under the cursor
+<kbd>o</kbd>      | A tooltip w/ a `sense` for the current `lexical category`
 <kbd>/</kbd>      | New search
 <kbd>l</kbd>      | Move backward in history
 <kbd>r</kbd>      | Move forward in history
@@ -61,12 +63,13 @@ mode.
 
 ## Bugs
 
-* ≈ 10KB .el size is too much for such a small major mode.
+* ≈ 14KB .el size is too much for such a small major mode.
 * Tested only w/ wordnet-3.0 on Fedora 22.
 
 ## TODO
 
-* Cross-link 'senses' in each heading with 'Overview'.
+* Display a lexical category in the echo area akin to eldoc.
+* Expand inline references to another word.
 
 ## License
 
