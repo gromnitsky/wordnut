@@ -10,14 +10,14 @@ outline-mode derived buffer.
 * 1 buffer `*WordNut*` for all query results.
 * Back/forward/view history.
 
+![A screenshot of running wordnut](https://raw.github.com/gromnitsky/wordnut/master/screenshot1.png)
+
 ## Requirements
 
 * Emacs 24.4+
 * wn(1) in `PATH`
 * (optionally)
   [adaptive-wrap](http://elpa.gnu.org/packages/adaptive-wrap.html)
-
-![A screenshot of running wordnut](https://raw.github.com/gromnitsky/wordnut/master/screenshot1.png)
 
 ## Installation
 
@@ -60,16 +60,40 @@ kbd                                  | desc
 <kbd>Space</kbd>                     | PageDown
 <kbd>b</kbd>, <kbd>Backspace</kbd>   | PageUp
 
+## Senses overview
+
+When reading long entries it's easy to get lost in the number of word
+_senses_. For example, do `M-x wordnut-search RET part RET`. The verb
+_part_ contains 12 senses. Its Synonyms/Hypernyms section has an
+entry:
+
+~~~
+** Sense 3
+depart, part, start, start out, set forth, set off, set out, take off
+	   => leave, go forth, go away
+		  Phrasal Verb-> part with#1
+~~~
+
+To which meaning of all senses exactly it corresponds? You could
+scroll back to the overview section, manually find the _verb_ section
+& look into the item 3. Then you scroll back.
+
+Instead of doing this, press <kbd>o</kbd> when the cursor is somewhere
+in the `Sense 3` subsection to auto-retrieve the text from the
+overview. If you press <kbd>o</kbd> on a line `Phrasal Verb-> part
+with#1` it gets you to the wordnet entry _part with_ → verb_ → _sense
+1_. To return to the _part_ word, press <kbd>l</kbd>.
+
 ## Bugs
 
-* ≈ 14KB .el size is too much for such a small major mode.
+* ≈ 18KB is too much for such a small major mode.
 * Tested only w/ wordnet-3.0 on Fedora 22.
 
 ## TODO
 
 * Display a lexical category in the echo area akin to eldoc.
-* Expand inline references to another word.
-* Save buffer position in history.
+* Custom faces.
+* Custom URI handler for `wordnut:part%20with#verb/1`.
 
 ## Credits
 

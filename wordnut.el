@@ -5,6 +5,8 @@
 (require 'outline)
 (require 'imenu)
 
+(require 'wordnut-history)
+
 (defconst wordnut-meta-name "wordnut")
 (defconst wordnut-meta-version "0.0.1")
 
@@ -47,11 +49,8 @@
     "Coordinate" "Grep" "Similarity"
     "Entailment" "'Cause To'" "Sample" "Overview of"))
 
-(defconst wordnut-hist-max 20)
-(defvar wordnut-hist-back '())
-(defvar wordnut-hist-forw '())
-(defvar wordnut-hist-cur nil)
 (defvar wordnut-completion-hist '())
+(defvar wordnut-hs (make-wordnut--h))
 
 
 
@@ -81,7 +80,7 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
 (define-key wordnut-mode-map (kbd "RET") 'wordnut-lookup-current-word)
 (define-key wordnut-mode-map (kbd "l") 'wordnut-history-backward)
 (define-key wordnut-mode-map (kbd "r") 'wordnut-history-forward)
-(define-key wordnut-mode-map (kbd "h") 'wordnut-lookup-history)
+(define-key wordnut-mode-map (kbd "h") 'wordnut-history-lookup)
 (define-key wordnut-mode-map (kbd "/") 'wordnut-search)
 (define-key wordnut-mode-map (kbd "o") 'wordnut-show-overview)
 
@@ -95,6 +94,12 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
 
 ;; this mode is suitable only for specially formatted data
 (put 'wordnut-mode 'mode-class 'special)
+
+(defun wordnut--get-buffer ()
+  "Return a major mode buffer or cry."
+  (let ((buf (get-buffer wordnut-bufname)))
+    (unless buf (user-error "Has %s buffer been killed?" wordnut-bufname))
+    buf))
 
 (defun wordnut--completing (input)
   (let ((completion-ignore-case t))
@@ -128,16 +133,17 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
 (defun wordnut-search (word)
   "Prompt for a word to search for, then do the lookup."
   (interactive (list (wordnut--completing (current-word t t))))
+  (ignore-errors
+    (wordnut--history-update-cur wordnut-hs))
   (wordnut--lookup word))
 
-(defun wordnut--fix-name (str)
-  (let ((max 10))
-    (if (> (length str) max)
-	(concat (substring str 0 max) "...")
-      str)
-    ))
+(defun wordnut-lookup-current-word ()
+  (interactive)
+  (ignore-errors
+    (wordnut--history-update-cur wordnut-hs))
+  (wordnut--lookup (current-word)))
 
-(defun wordnut--lookup (word &optional dont-modify-history)
+(defun wordnut--lookup (word &optional category sense)
   "If wn prints something to stdout it means the word is
 found. Otherwise we run wn again but with its -grepX options. If
 that returns nothing or a list of words, prompt for a word, then
@@ -147,8 +153,8 @@ rerun `wordnut--lookup' with the selected word."
   (setq word (string-trim word))
   (let ((progress-reporter
 	 (make-progress-reporter
-	  (format "WordNet lookup for `%s'... " (wordnut--fix-name word)) 0 2))
-	result buf)
+	  (format "WordNet lookup for `%s'... " (wordnut-u-fix-name word)) 0 2))
+	result buf item ipoint)
 
     (setq result (apply 'wordnut--exec word wordnut-cmd-options))
     (progress-reporter-update progress-reporter 1)
@@ -158,11 +164,12 @@ rerun `wordnut--lookup' with the selected word."
 	  (setq sugg (wordnut--suggestions word))
 	  (setq word (if (listp sugg) (wordnut--completing word) sugg))
 	  ;; recursion!
-	  (wordnut--lookup word dont-modify-history))
+	  (wordnut--lookup word category sense))
       ;; else
-      (if (not dont-modify-history)
-	  (setq wordnut-hist-back (wordnut--hist-add word wordnut-hist-back)))
-      (setq wordnut-hist-cur word)
+      (if (setq item (wordnut--h-find wordnut-hs word))
+	  (setq ipoint (cdr (assoc 'point item))))
+      (setq item (wordnut--h-item-new word ipoint category sense))
+      (wordnut--h-add wordnut-hs item)
 
       (setq buf (get-buffer-create wordnut-bufname))
       (with-current-buffer buf
@@ -173,88 +180,89 @@ rerun `wordnut--lookup' with the selected word."
 	(setq imenu--index-alist nil)	; flush imenu cache
 	(set-buffer-modified-p nil)
 	(unless (eq major-mode 'wordnut-mode) (wordnut-mode))
-	(show-all)
-	(wordnut--headerline))
+	(wordnut--headerline)
+	(wordnut--moveto item))
 
       (progress-reporter-update progress-reporter 2)
       (progress-reporter-done progress-reporter)
-      (wordnut--switch-to-buffer buf))
+      (wordnut-u-switch-to-buffer buf))
     ))
 
-(defun wordnut-lookup-current-word ()
-  (interactive)
-  (wordnut--lookup (current-word)))
-
-(defun wordnut--switch-to-buffer (buf)
-  (unless (eq (current-buffer) buf)
-    (unless (cdr (window-list))
-      (split-window-vertically))
-    (other-window 1)
-    (switch-to-buffer buf)))
+(defun wordnut--moveto (item)
+  (let ((name (cdr (assoc 'name item)))
+	(point (cdr (assoc 'point item)))
+	(category (cdr (assoc 'category item)))
+	(sense (cdr (assoc 'sense item))))
+    (if (or category sense)
+	(progn
+	  (unless category (setq category "[^ ]+"))
+	  (unless sense (setq sense "1"))
+	  (goto-char (point-min))
+	  (re-search-forward (format "^\\* Overview of %s" category))
+	  (forward-line)
+	  (re-search-forward (format "%s\\. " sense))
+	  (goto-char (line-beginning-position))
+	  (message "wordnut--moveto: %s -> (lexi) '%s' '%s' (cur point: %d)"
+		   name category sense (point)))
+      (if point
+	  (progn
+	    (goto-char point)
+	    (message "wordnut--moveto: (point) %s -> %d" name point))
+	(message "wordnut--moveto: (point) %s -> no" name))
+      )))
 
 (defun wordnut--headerline ()
-  (let (get-hist-item get-len)
-    (setq get-hist-item (lambda (list)
-			  (or (if (equal (car list) wordnut-hist-cur)
-				  (nth 1 list) (car list)) "∅")))
-    (setq get-len (lambda (list)
-		    (if (equal (car list) wordnut-hist-cur)
-			(1- (length list))
-		      (length list))))
+  (setq header-line-format
+	(format "C: %s, ← %s (%d), → %s (%d)"
+		(propertize (wordnut-u-fix-name
+			     (wordnut--h-name-by-pos
+			      wordnut-hs (wordnut--h-pos wordnut-hs)))
+			    'face 'bold)
 
-    (setq header-line-format
-	  (format "C: %s, ← %s (%d), → %s (%d)"
-		  (propertize (wordnut--fix-name wordnut-hist-cur) 'face 'bold)
-		  (wordnut--fix-name (funcall get-hist-item wordnut-hist-back))
-		  (funcall get-len wordnut-hist-back)
-		  (wordnut--fix-name (funcall get-hist-item wordnut-hist-forw))
-		  (funcall get-len wordnut-hist-forw)
-		  )
-	  )))
+		(or (wordnut-u-fix-name
+		     (wordnut--h-name-by-pos
+		      wordnut-hs (1+ (wordnut--h-pos wordnut-hs)))) "∅")
+		(wordnut--h-back-size wordnut-hs)
 
-(defun wordnut--hist-slice (list)
-  (remove nil (cl-subseq list 0 wordnut-hist-max)))
-
-(defun wordnut--hist-add (val list)
-  "Return a new list."
-  (wordnut--hist-slice (if (member val list)
-			  (cons val (remove val list))
-			(cons val list)
-			)))
+		(or (wordnut-u-fix-name
+		     (wordnut--h-name-by-pos
+		      wordnut-hs (1- (wordnut--h-pos wordnut-hs)))) "∅")
+		(wordnut--h-forw-size wordnut-hs)
+		)
+	))
 
 (defun wordnut-history-clean ()
   (interactive)
-  (setq wordnut-hist-back '())
-  (setq wordnut-hist-forw '())
-  (setq wordnut-hist-cur nil)
-  )
+  (wordnut--h-clean wordnut-hs))
 
-(defun wordnut-lookup-history ()
+(defun wordnut-history-lookup ()
   (interactive)
-  (let ((items (append wordnut-hist-back wordnut-hist-forw)))
-    (unless items (user-error "History is empty"))
-    (wordnut--lookup (ido-completing-read "wordnut history: " items) t)
-    ))
+  (let ((list (wordnut--h-names wordnut-hs)))
+    (unless list (user-error "History is ∅"))
+    (wordnut--lookup (ido-completing-read "wordnut history: " list))))
 
-(defmacro wordnut-hist--extract (desc from to)
-  `(let (word)
-     (unless ,from (user-error "The %s history is ∅" ,desc))
+(defun wordnut--history-update-cur (hs)
+  (let ((cur (nth (wordnut--h-pos hs) (wordnut--h-list hs)))
+	(buf (wordnut--get-buffer)))
+    (if cur
+	(with-current-buffer buf
+	  (setf (cdr (assoc 'point cur)) (point))))))
 
-     ;; move the item from FROM to TO
-     (setq word (pop ,from))
-     (setq ,to (wordnut--hist-add word ,to))
-
-     (if (equal word wordnut-hist-cur) (setq word (car ,from)))
-     (unless word (user-error "No more %s history" ,desc))
-     (wordnut--lookup word t)))
+;; a rare case when elisp is cool
+(defmacro wordnut--history-move (desc direction)
+  `(let (item)
+     (setq item (,direction wordnut-hs 'wordnut--history-update-cur))
+     (if item
+	 (wordnut--lookup (cdr (assoc 'name item)))
+       (user-error "The %s history is ∅" ,desc)) ))
 
 (defun wordnut-history-backward ()
   (interactive)
-  (wordnut-hist--extract "backward" wordnut-hist-back wordnut-hist-forw))
+  (wordnut--history-move "backward" wordnut--h-back))
 
 (defun wordnut-history-forward ()
   (interactive)
-  (wordnut-hist--extract "forward" wordnut-hist-forw wordnut-hist-back))
+  (wordnut--history-move "forward" wordnut--h-forw))
 
 (defun wordnut--imenu-make-index ()
   (let ((index '()) marker)
@@ -303,7 +311,7 @@ rerun `wordnut--lookup' with the selected word."
 
 (defun wordnut--lexi-cat ()
   "Return a category name for the current lexical category."
-  (let (line match)
+  (let (line)
     (save-excursion
       (ignore-errors
 	(outline-up-heading 1))
@@ -316,7 +324,7 @@ rerun `wordnut--lookup' with the selected word."
 
 (defun wordnut--lexi-sense ()
   "Return a sense number for the current lexical category."
-  (let (line match)
+  (let (line)
     (save-excursion
       (ignore-errors
 	(outline-up-heading -1))
@@ -337,28 +345,31 @@ rerun `wordnut--lookup' with the selected word."
 	      (match-string 3 line))
       nil)))
 
-(defun wordnut--lexi-overview ()
+(cl-defun wordnut--lexi-overview ()
   "Try to locale an 'Overview' heading to extract a 'sense'
 of a current lexical category.
 
 Return a list '(cat sense desc)."
   (let (desc cat sense inline)
+    (setq inline (wordnut--lexi-info-inline))
+    (if inline
+	(if (equal (car inline) (wordnut--lexi-word))
+	    (progn
+	      (setq cat (nth 1 inline))
+	      (setq sense (nth 2 inline)))
+	  ;; go to the linked word
+	  (wordnut--history-update-cur wordnut-hs)
+	  (wordnut--lookup (car inline) (nth 1 inline) (nth 2 inline))
+	  (cl-return-from wordnut--lexi-overview nil)
+	  ))
+
+    (setq cat (or cat (wordnut--lexi-cat)))
+    (setq sense (or sense (wordnut--lexi-sense)))
+
     (save-excursion
-      (setq inline (wordnut--lexi-info-inline))
-      (if inline
-	  (if (equal (car inline) (wordnut--lexi-word))
-	      (progn
-		(setq cat (nth 1 inline))
-		(setq sense (nth 2 inline)))
-	    ;; FIXME
-	    (user-error "Inline reference extraction is not implemented")))
-
-      (setq cat (or cat (wordnut--lexi-cat)))
-      (setq sense (or sense (wordnut--lexi-sense)))
-
       (goto-char (point-min))
       (re-search-forward (format "^\\* Overview of %s" cat) nil t)
-      (next-line)
+      (forward-line)
       (re-search-forward (format "%s\\. " sense) nil t)
       (setq desc (string-trim
 		  (substring-no-properties (thing-at-point 'line))))
@@ -380,33 +391,18 @@ for a query. For example, return 'do' instead of 'did'."
 (defun wordnut-show-overview ()
   "Show a tooltip of a 'sense' for the current lexical category."
   (interactive)
-  (let ((buf (get-buffer wordnut-bufname)) desc)
-    (unless buf (user-error "Has %s buffer been killed?" wordnut-bufname))
-
+  (let ((buf (wordnut--get-buffer)) desc)
     (with-current-buffer buf
       (setq desc (wordnut--lexi-overview))
-      (tooltip-show (wordnut--word-wrap
-		     (+ (/ (window-body-width) 2) (/ (window-body-width) 4))
-		     (format "OVERVIEW `%s', %s\n\n%s"
-			     (wordnut--fix-name (wordnut--lexi-word))
-			     (car desc) (nth 2 desc)
-			     )))
+      (if desc
+	  (tooltip-show (wordnut-u-word-wrap
+			 (+ (/ (window-body-width) 2) (/ (window-body-width) 4))
+			 (format "OVERVIEW `%s', %s\n\n%s"
+				 (wordnut-u-fix-name (wordnut--lexi-word))
+				 (car desc) (nth 2 desc)
+				 ))))
       )))
 
 
-
-;; s.el
-(defun wordnut--word-wrap (len s)
-  "If S is longer than LEN, wrap the words with newlines."
-  (with-temp-buffer
-    (insert s)
-    (let ((fill-column len))
-      (fill-region (point-min) (point-max)))
-    (buffer-substring-no-properties (point-min) (point-max))))
-
-;; emacswiki.org
-(defun wordnut--filter (condp lst)
-  (delq nil
-	(mapcar (lambda (x) (and (funcall condp x) x)) lst)))
 
 (provide 'wordnut)
