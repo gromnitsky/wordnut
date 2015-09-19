@@ -60,10 +60,11 @@
 
 (defun wordnut--h-delete-all (list str)
   "Return a new list w/o items where items names == str."
-  (wordnut--filter (lambda (idx)
-		     (if (not (wordnut--h-equal-words? (cdr (assoc 'name idx)) str))
-			 idx))
-		   list))
+  (wordnut-u-filter
+   (lambda (idx)
+     (if (not (wordnut--h-equal-words? (cdr (assoc 'name idx)) str))
+	 idx))
+   list))
 
 (defun wordnut--h-slice (list start &optional end)
   "omglol common lisp; return a new list."
@@ -116,10 +117,5 @@ Set (wordnut--h-pos hs) to the ITEM physical index in (wordnut--h-list hs)."
   (nth (wordnut--h-pos hs) (wordnut--h-list hs)))
 
 
-
-;; emacswiki.org
-(defun wordnut--filter (condp lst)
-  (delq nil
-	(mapcar (lambda (x) (and (funcall condp x) x)) lst)))
 
 (provide 'wordnut-history)

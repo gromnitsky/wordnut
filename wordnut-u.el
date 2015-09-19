@@ -9,6 +9,11 @@
       (fill-region (point-min) (point-max)))
     (buffer-substring-no-properties (point-min) (point-max))))
 
+;; emacswiki.org
+(defun wordnut-u-filter (condp lst)
+  (delq nil
+	(mapcar (lambda (x) (and (funcall condp x) x)) lst)))
+
 (defun wordnut-u-switch-to-buffer (buf)
   (unless (eq (current-buffer) buf)
     (unless (cdr (window-list))

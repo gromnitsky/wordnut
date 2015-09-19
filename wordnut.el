@@ -61,7 +61,6 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
 \\{wordnut-mode-map}"
 
   (setq buffer-read-only t)
-  (setq truncate-lines nil)
   (setq-local visual-line-fringe-indicators '(nil top-right-angle))
   (visual-line-mode 1)
 
@@ -70,8 +69,12 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
   (setq-local imenu-create-index-function 'wordnut--imenu-make-index)
   (imenu-add-menubar-index)
 
+  ;; rm text mode menu
+  (local-unset-key [menu-bar text])
+
   ;; if user has adaptive-wrap mode installed, use it
-  (if (fboundp 'adaptive-wrap-prefix-mode)
+  (if (and (fboundp 'adaptive-wrap-prefix-mode)
+	   (boundp 'adaptive-wrap-extra-indent))
       (progn
 	(setq adaptive-wrap-extra-indent 3)
 	(adaptive-wrap-prefix-mode 1))))
@@ -115,7 +118,7 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
 	  (if (equal "" result)
 	      nil				; no match
 	    (setq result (split-string result "\n"))
-	    (wordnut--filter (lambda (idx)
+	    (wordnut-u-filter (lambda (idx)
 			       (and
 				(not (string-prefix-p "Grep of " idx))
 				(not (equal idx ""))))
@@ -279,7 +282,7 @@ rerun `wordnut--lookup' with the selected word."
 	(case-fold-search nil))
     ;; delete the 1st empty line
     (goto-char (point-min))
-    (delete-char 1)
+    (delete-blank-lines)
 
     ;; make headings
     (delete-matching-lines "^ +$" (point-min) (point-max))
