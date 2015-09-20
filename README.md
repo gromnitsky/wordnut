@@ -29,7 +29,8 @@ In `~/.emacs`:
 	(require 'wordnut)
 
 If you have adaptive-wrap mode installed, wordnut will automatically
-use it to improve the text formatting.
+use it to improve the text formatting (don't forget to add `(require
+'adaptive-wrap)` in `~/.emacs`).
 
 ## Keyboard shortcuts
 
@@ -81,7 +82,7 @@ scroll back to the overview section, manually find the _verb_ section
 Instead of doing this, press <kbd>o</kbd> when the cursor is somewhere
 in the `Sense 3` subsection to auto-retrieve the text from the
 overview. If you press <kbd>o</kbd> on a line `Phrasal Verb-> part
-with#1` it gets you to the wordnet entry _part with_ → verb_ → _sense
+with#1` it gets you to the wordnet entry _part with_ → _verb_ → _sense
 1_. To return to the _part_ word, press <kbd>l</kbd>.
 
 ## Bugs
