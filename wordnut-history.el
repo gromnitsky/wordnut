@@ -25,8 +25,8 @@
 	`(sense . ,sense)) )
 
 (defun wordnut--h-equal-words? (left right)
-  (setq left (replace-regexp-in-string "_" " " left))
-  (setq right (replace-regexp-in-string "_" " " right))
+  (setq left (replace-regexp-in-string "[_-]" " " left))
+  (setq right (replace-regexp-in-string "[_-]" " " right))
   (equal (downcase left) (downcase right)))
 
 (cl-defun wordnut--h-index-of (hs str)

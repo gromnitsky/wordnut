@@ -99,6 +99,8 @@
   (should (wordnut--h-equal-words? "underscores_are_everywhere" "underscores are_everywhere"))
   (should (wordnut--h-equal-words? "part WITH" "PART_with"))
   (should-not (wordnut--h-equal-words? "part" "PART_with"))
+
+  (should (wordnut--h-equal-words? "part_with" "part-with"))
   )
 
 
