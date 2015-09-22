@@ -11,7 +11,7 @@
 (defconst wordnut-meta-version "0.0.1")
 
 (defconst wordnut-bufname "*WordNut*")
-(defconst wordnut-cmd "wn")
+(defvar wordnut-cmd "wn")
 (defconst wordnut-cmd-options
   '("-over"
     "-synsn" "-synsv" "-synsa" "-synsr"

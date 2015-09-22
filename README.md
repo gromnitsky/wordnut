@@ -21,6 +21,12 @@ outline-mode derived buffer.
 
 ## Installation
 
+If you have adaptive-wrap mode installed, wordnut will automatically
+use it to improve the text formatting (don't forget to add `(require
+'adaptive-wrap)` in `~/.emacs`).
+
+### Fedora
+
 	# dnf install wordnet
 
 In `~/.emacs`:
@@ -28,9 +34,21 @@ In `~/.emacs`:
 	(add-to-list 'load-path "/the/dir/with/the/repo")
 	(require 'wordnut)
 
-If you have adaptive-wrap mode installed, wordnut will automatically
-use it to improve the text formatting (don't forget to add `(require
-'adaptive-wrap)` in `~/.emacs`).
+### Windows
+
+1. You need a compiled Windows version of Wordnet 3.0. Googling gives
+   us a bizzare
+   [WordNet 3.0 windows visual studio](http://sourceforge.net/projects/wordnet30forwin/files/WordNet%203.0/3.0.2/WordNet_3.0_win32.zip). Extract
+   `bin` & `dict` directories from it to `c:\Program
+   Files\WordNet\3.0\` (for some reason the path is hard-coded).
+
+2. In `%APPDATA%\.emacs`:
+
+		(if (eq 'windows-nt system-type)
+			(progn
+			  (add-to-list 'load-path "/the/dir/with/the/repo")
+			  (setq wordnut-cmd "c:/Program Files/WordNet/3.0/bin/wn.exe")
+			  (require 'wordnut)))
 
 ## Keyboard shortcuts
 
@@ -75,7 +93,7 @@ depart, part, start, start out, set forth, set off, set out, take off
 		  Phrasal Verb-> part with#1
 ~~~
 
-To which meaning of all senses exactly it corresponds? You could
+To which meaning of all senses it exactly corresponds? You could
 scroll back to the overview section, manually find the _verb_ section
 & look into the item 3. Then you scroll back.
 
@@ -88,7 +106,9 @@ with#1` it gets you to the wordnet entry _part with_ → _verb_ → _sense
 ## Bugs
 
 * ≈ 18KB is too much for such a small major mode.
-* Tested only w/ wordnet-3.0 on Fedora 22.
+* Crosslinks are not parsed reliably if there are several of them on 1
+  line, e.g. `RELATED TO->(verb) sensify#1` is recognized fine, but
+  `USAGE TERM->(adj) chilly#2, parky#1` is not.
 
 ## TODO
 
