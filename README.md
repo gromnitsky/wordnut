@@ -1,7 +1,7 @@
 # Major mode interface to WordNet
 
-Uses wn(1) for searching local wordnet db; injects results in a
-outline-mode derived buffer.
+Uses wn(1) for searching local wordnet db; injects results into
+`*WordNut*` buffer.
 
 ## Features
 
@@ -74,7 +74,6 @@ Auxiliary:
 
 kbd                                  | desc
 ------------------------------------ | -------------
-<kbd>Tab</kbd>                       | Toggle heading/section visibility
 <kbd>M-Up</kbd>, <kbd>M-Down</kbd>   | Move between sections
 <kbd>Space</kbd>                     | PageDown
 <kbd>b</kbd>, <kbd>Backspace</kbd>   | PageUp
@@ -99,22 +98,20 @@ scroll back to the overview section, manually find the _verb_ section
 
 Instead of doing this, press <kbd>o</kbd> when the cursor is somewhere
 in the `Sense 3` subsection to auto-retrieve the text from the
-overview. If you press <kbd>o</kbd> on a line `Phrasal Verb-> part
-with#1` it gets you to the wordnet entry _part with_ → _verb_ → _sense
-1_. To return to the _part_ word, press <kbd>l</kbd>.
+overview. If you press <kbd>o</kbd> (or <kbd>Enter</kbd>) when the
+curson is inside `part with#1`word, it gets you to the wordnet entry
+_part with_ → _verb_ → _sense 1_. To return to the _part_ word, press
+<kbd>l</kbd>.
 
 ## Bugs
 
 * ≈ 18KB is too much for such a small major mode.
-* Crosslinks are not parsed reliably if there are several of them on 1
-  line, e.g. `RELATED TO->(verb) sensify#1` is recognized fine, but
-  `USAGE TERM->(adj) chilly#2, parky#1` is not.
 
 ## TODO
 
 * Display a lexical category in the echo area akin to eldoc.
-* Custom faces.
 * Custom URI handler for `wordnut:part%20with#verb/1`.
+* Mouse support.
 
 ## Credits
 

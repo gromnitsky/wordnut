@@ -52,9 +52,18 @@
 (defvar wordnut-completion-hist '())
 (defvar wordnut-hs (make-wordnut--h))
 
+(defconst wordnut-font-lock-keywords
+  '(
+    ("^\\* .+$" . 'outline-1)
+    ("^\\*\\* .+$" . 'outline-2)
+
+    ("->\\((.+?)\\)?" ;; anchor
+     " \\([^,]+#[0-9]+\\)" nil nil (1 'link))
+    ))
+
 
 
-(define-derived-mode wordnut-mode outline-mode "WordNut"
+(define-derived-mode wordnut-mode fundamental-mode "WordNut"
   "Major mode interface to WordNet lexical database.
 Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
 
@@ -69,8 +78,7 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
   (setq-local imenu-create-index-function 'wordnut--imenu-make-index)
   (imenu-add-menubar-index)
 
-  ;; rm text mode menu
-  (local-unset-key [menu-bar text])
+  (setq font-lock-defaults '(wordnut-font-lock-keywords))
 
   ;; if user has adaptive-wrap mode installed, use it
   (if (and (fboundp 'adaptive-wrap-prefix-mode)
@@ -89,7 +97,6 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
 
 (define-key wordnut-mode-map [(meta down)] 'outline-next-visible-heading)
 (define-key wordnut-mode-map [(meta up)] 'outline-previous-visible-heading)
-(define-key wordnut-mode-map (kbd "TAB") 'outline-toggle-children)
 
 (define-key wordnut-mode-map (kbd "b") 'scroll-down-command)
 (define-key wordnut-mode-map (kbd "DEL") 'scroll-down-command)
@@ -142,9 +149,15 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
 
 (defun wordnut-lookup-current-word ()
   (interactive)
-  (ignore-errors
-    (wordnut--history-update-cur wordnut-hs))
-  (wordnut--lookup (current-word)))
+  (let (inline)
+    (ignore-errors
+      (wordnut--history-update-cur wordnut-hs))
+
+    (setq inline (wordnut--lexi-info-inline))
+    (if inline
+	(wordnut--lookup (car inline) (nth 1 inline) (nth 2 inline))
+      (wordnut--lookup (current-word)))
+    ))
 
 (defun wordnut--lookup (word &optional category sense)
   "If wn prints something to stdout it means the word is
@@ -338,15 +351,41 @@ rerun `wordnut--lookup' with the selected word."
       (match-string 1 line)
       )))
 
+(defvar wordnut--lexi-inline-link-re
+  "->\\((.+)\\)? \\(.+\\)#\\([0-9]+\\)")
+
 (defun wordnut--lexi-info-inline ()
   "Return a list '(word cat sense) from the current line or nil."
-  (let ((line (substring-no-properties (thing-at-point 'line))))
-    (if (string-match "->\\((.+)\\)? \\(.+\\)#\\([0-9]+\\)" line)
-	(list (match-string 2 line)
-	      (if (match-string 1 line)
-		  (replace-regexp-in-string "[()]" "" (match-string 1 line)))
-	      (match-string 3 line))
+  (let ((line (substring-no-properties (thing-at-point 'line)))
+	cat raw)
+    (if (string-match wordnut--lexi-inline-link-re line)
+	(progn
+	  (setq cat
+	       (if (match-string 1 line)
+		   (replace-regexp-in-string "[()]" "" (match-string 1 line))))
+
+	  (unless (setq raw (wordnut--lexi-info-inline-link))
+	    (error "failed to extract an inline link"))
+	  (setq raw (split-string raw "#"))
+
+	  (list (nth 0 raw) cat (nth 1 raw)) )
       nil)))
+
+(defun wordnut--lexi-info-inline-link ()
+  "Return a string 'foo bar#123' or nil."
+  (let ((word-re-back "[,)>]")
+	(word-re-forw "\\([^,)>]+#[0-9]+\\)")
+	(line (substring-no-properties (thing-at-point 'line))) )
+
+    (if (string-match wordnut--lexi-inline-link-re line)
+	(save-restriction
+	  (narrow-to-region (line-beginning-position) (line-end-position))
+	  (re-search-backward word-re-back nil t)
+	  (forward-char)
+	  (re-search-forward word-re-forw)
+	  (string-trim (substring-no-properties (match-string 0))) )
+      nil
+      ) ))
 
 (cl-defun wordnut--lexi-overview ()
   "Try to locale an 'Overview' heading to extract a 'sense'
