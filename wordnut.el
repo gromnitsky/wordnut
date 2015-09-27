@@ -58,7 +58,7 @@
     ("^\\*\\* .+$" . 'outline-2)
 
     ("->\\((.+?)\\)?" ;; anchor
-     " \\([^,]+#[0-9]+\\)" nil nil (1 'link))
+     " \\([^,;]+#[0-9]+\\)" nil nil (1 'link))
     ))
 
 
@@ -366,8 +366,8 @@ rerun `wordnut--lookup' with the selected word."
 
 (defun wordnut--lexi-info-inline-link ()
   "Return a string 'foo bar#123' or nil."
-  (let ((word-re-back "[,)>]")
-	(word-re-forw "\\([^,)>]+#[0-9]+\\)")
+  (let ((word-re-back "[,;)>]")
+	(word-re-forw "\\([^,;)>]+#[0-9]+\\)")
 	(line (substring-no-properties (thing-at-point 'line))) )
 
     (if (string-match wordnut--lexi-inline-link-re line)
