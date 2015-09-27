@@ -78,6 +78,7 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
   (imenu-add-menubar-index)
 
   (setq font-lock-defaults '(wordnut-font-lock-keywords))
+  (wordnut--timer-start)
 
   ;; if user has adaptive-wrap mode installed, use it
   (if (and (fboundp 'adaptive-wrap-prefix-mode)
@@ -437,6 +438,30 @@ for a query. For example, return 'do' instead of 'did'."
 				 (car desc) (nth 2 desc)
 				 ))))
       )))
+
+
+
+(defconst wordnut--timer-delay 0.6)
+(defvar wordnut--timer-cur nil)
+
+(defun wordnut--timer-run ()
+  (if (equal wordnut-bufname (buffer-name))
+      ;; don't save the message in the Emacs log
+      (let ((message-log-max nil))
+	(ignore-errors
+	  (message "Sense lexical category: %s" (wordnut--lexi-cat)))
+	)))
+
+;; to clear timer:
+;; (setq timer-idle-list (cl-subseq timer-idle-list 0 3))
+(defun wordnut--timer-start()
+  "Start a timer to print in the Echo area a current lexical category."
+  (or (and wordnut--timer-cur
+	   (memq wordnut--timer-cur timer-idle-list))
+      (setq wordnut--timer-cur
+	    (run-with-idle-timer
+	     wordnut--timer-delay
+	     t 'wordnut--timer-run)) ))
 
 
 
