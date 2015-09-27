@@ -52,13 +52,17 @@
 (defvar wordnut-completion-hist '())
 (defvar wordnut-hs (make-wordnut--h))
 
+(defconst wordnut-fl-link-cat-re "->\\((.+?)\\)?")
+(defconst wordnut-fl-link-word-sense-re "\\([^,;)>]+#[0-9]+\\)")
+(defconst wordnut-fl-link-re (concat wordnut-fl-link-cat-re " "
+				     wordnut-fl-link-word-sense-re))
 (defconst wordnut-font-lock-keywords
-  '(
+  `(
     ("^\\* .+$" . 'outline-1)
     ("^\\*\\* .+$" . 'outline-2)
 
-    ("->\\((.+?)\\)?" ;; anchor
-     " \\([^,;]+#[0-9]+\\)" nil nil (1 'link))
+    (,wordnut-fl-link-cat-re ;; anchor
+     ,(concat " " wordnut-fl-link-word-sense-re) nil nil (1 'link))
     ))
 
 
@@ -146,7 +150,7 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
     (ignore-errors
       (wordnut--history-update-cur wordnut-hs))
 
-    (setq inline (wordnut--lexi-info-inline))
+    (setq inline (wordnut--lexi-link))
     (if inline
 	(wordnut--lookup (car inline) (nth 1 inline) (nth 2 inline))
       (wordnut--lookup (current-word)))
@@ -324,7 +328,7 @@ rerun `wordnut--lookup' with the selected word."
     (save-excursion
       (ignore-errors
 	(outline-up-heading 1))
-      (setq line (substring-no-properties (thing-at-point 'line)))
+      (setq line (wordnut-u-line-cur))
       (unless (string-match " of \\(noun\\|verb\\|adj\\|adv\\)" line)
 	(user-error "Cannot extract a lexical category"))
 
@@ -337,46 +341,43 @@ rerun `wordnut--lookup' with the selected word."
     (save-excursion
       (ignore-errors
 	(outline-up-heading -1))
-      (setq line (substring-no-properties (thing-at-point 'line)))
+      (setq line (wordnut-u-line-cur))
       (unless (string-match "Sense \\([0-9]+\\)" line)
 	(user-error "Cannot extract a sense number; move the cursor to the proper place first"))
 
       (match-string 1 line)
       )))
 
-(defvar wordnut--lexi-inline-link-re
-  "->\\((.+)\\)? \\(.+\\)#\\([0-9]+\\)")
-
-(defun wordnut--lexi-info-inline ()
+(defun wordnut--lexi-link ()
   "Return a list '(word cat sense) from the current line or nil."
-  (let ((line (substring-no-properties (thing-at-point 'line)))
+  (let ((line (wordnut-u-line-cur))
 	cat raw)
-    (if (string-match wordnut--lexi-inline-link-re line)
+    (if (string-match wordnut-fl-link-re line)
 	(progn
 	  (setq cat
 	       (if (match-string 1 line)
 		   (replace-regexp-in-string "[()]" "" (match-string 1 line))))
 
-	  (unless (setq raw (wordnut--lexi-info-inline-link))
+	  (unless (setq raw (wordnut--lexi-link-word-sense))
 	    (error "failed to extract an inline link"))
 	  (setq raw (split-string raw "#"))
 
 	  (list (nth 0 raw) cat (nth 1 raw)) )
       nil)))
 
-(defun wordnut--lexi-info-inline-link ()
+(defun wordnut--lexi-link-word-sense ()
   "Return a string 'foo bar#123' or nil."
   (let ((word-re-back "[,;)>]")
-	(word-re-forw "\\([^,;)>]+#[0-9]+\\)")
-	(line (substring-no-properties (thing-at-point 'line))) )
+	(line (wordnut-u-line-cur)) )
 
-    (if (string-match wordnut--lexi-inline-link-re line)
+    (if (string-match wordnut-fl-link-re line)
 	(save-restriction
 	  (narrow-to-region (line-beginning-position) (line-end-position))
 	  (re-search-backward word-re-back nil t)
 	  (forward-char)
-	  (re-search-forward word-re-forw)
-	  (string-trim (substring-no-properties (match-string 0))) )
+	  (if (re-search-forward wordnut-fl-link-word-sense-re nil t)
+	      (string-trim (substring-no-properties (match-string 0)))
+	    nil))
       nil
       ) ))
 
@@ -386,7 +387,7 @@ of a current lexical category.
 
 Return a list '(cat sense desc)."
   (let (desc cat sense inline)
-    (setq inline (wordnut--lexi-info-inline))
+    (setq inline (wordnut--lexi-link))
     (if inline
 	(if (equal (car inline) (wordnut--lexi-word))
 	    (progn
@@ -406,8 +407,7 @@ Return a list '(cat sense desc)."
       (re-search-forward (format "^\\* Overview of %s" cat) nil t)
       (forward-line)
       (re-search-forward (format "%s\\. " sense) nil t)
-      (setq desc (string-trim
-		  (substring-no-properties (thing-at-point 'line))))
+      (setq desc (string-trim (wordnut-u-line-cur)))
 
       (unless desc (user-error "Failed to extract an overview"))
       (list cat sense desc)
@@ -421,7 +421,7 @@ for a query. For example, return 'do' instead of 'did'."
     (unless (re-search-forward "^\\* Overview of [^ ]+ \\(.+\\)$" nil t)
       (user-error "Cannot extract the actual current word"))
     (substring-no-properties
-     (replace-regexp-in-string "_" " " (match-string 1)))))
+     (replace-regexp-in-string wordnut--h-word-delim-re " " (match-string 1)))))
 
 (defun wordnut-show-overview ()
   "Show a tooltip of a 'sense' for the current lexical category."

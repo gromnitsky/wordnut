@@ -28,6 +28,9 @@
       str)
     ))
 
+(defun wordnut-u-line-cur()
+  (substring-no-properties (or (thing-at-point 'line) "")) )
+
 
 
 (provide 'wordnut-u)

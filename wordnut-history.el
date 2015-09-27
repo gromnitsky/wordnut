@@ -10,6 +10,8 @@
 	      (list '())
 	      (pos -1))
 
+(defconst wordnut--h-word-delim-re "[_-]")
+
 (defun wordnut--h-clean (hs)
   (setf (wordnut--h-list hs) '()
 	(wordnut--h-pos hs) -1))
@@ -25,8 +27,8 @@
 	`(sense . ,sense)) )
 
 (defun wordnut--h-equal-words? (left right)
-  (setq left (replace-regexp-in-string "[_-]" " " left))
-  (setq right (replace-regexp-in-string "[_-]" " " right))
+  (setq left (replace-regexp-in-string wordnut--h-word-delim-re " " left))
+  (setq right (replace-regexp-in-string wordnut--h-word-delim-re " " right))
   (equal (downcase left) (downcase right)))
 
 (cl-defun wordnut--h-index-of (hs str)
