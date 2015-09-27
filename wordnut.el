@@ -63,13 +63,12 @@
 
 
 
-(define-derived-mode wordnut-mode fundamental-mode "WordNut"
+(define-derived-mode wordnut-mode special-mode "WordNut"
   "Major mode interface to WordNet lexical database.
 Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
 
 \\{wordnut-mode-map}"
 
-  (setq buffer-read-only t)
   (setq-local visual-line-fringe-indicators '(nil top-right-angle))
   (visual-line-mode 1)
 
@@ -87,7 +86,6 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
 	(setq adaptive-wrap-extra-indent 3)
 	(adaptive-wrap-prefix-mode 1))))
 
-(define-key wordnut-mode-map (kbd "q") 'delete-window)
 (define-key wordnut-mode-map (kbd "RET") 'wordnut-lookup-current-word)
 (define-key wordnut-mode-map (kbd "l") 'wordnut-history-backward)
 (define-key wordnut-mode-map (kbd "r") 'wordnut-history-forward)
@@ -99,11 +97,6 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
 (define-key wordnut-mode-map [(meta up)] 'outline-previous-visible-heading)
 
 (define-key wordnut-mode-map (kbd "b") 'scroll-down-command)
-(define-key wordnut-mode-map (kbd "DEL") 'scroll-down-command)
-(define-key wordnut-mode-map (kbd "SPC") 'scroll-up-command)
-
-;; this mode is suitable only for specially formatted data
-(put 'wordnut-mode 'mode-class 'special)
 
 (defun wordnut--get-buffer ()
   "Return a major mode buffer or cry."
