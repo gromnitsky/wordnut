@@ -138,6 +138,7 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
       (apply 'call-process wordnut-cmd nil t nil word args)
       )))
 
+;;;###autoload
 (defun wordnut-search (word)
   "Prompt for a word to search for, then do the lookup."
   (interactive (list (wordnut--completing (current-word t t))))
@@ -145,6 +146,7 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
     (wordnut--history-update-cur wordnut-hs))
   (wordnut--lookup word))
 
+;;;###autoload
 (defun wordnut-lookup-current-word ()
   (interactive)
   (let (inline)
