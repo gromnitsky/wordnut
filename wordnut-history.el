@@ -70,6 +70,10 @@
 
 (defun wordnut--h-slice (list start &optional end)
   "omglol common lisp; return a new list."
+  (if start
+      (if (> (abs start) (length list)) (setq start 0)))
+  (if end
+      (if (> (abs end) (length list)) (setq end (length list))))
   (remove nil (cl-subseq list start end)))
 
 (defun wordnut--h-add (hs item)

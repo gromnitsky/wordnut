@@ -103,6 +103,16 @@
   (should (wordnut--h-equal-words? "part_with" "part-with"))
   )
 
+(ert-deftest slice()
+  (should-not (wordnut--h-slice nil 0))
+  (should-not (wordnut--h-slice nil 0 -1))
+  (should-not (wordnut--h-slice nil -1 -1))
+  (should-not (wordnut--h-slice nil 0 19))
+  (should (equal '(1 2 3) (wordnut--h-slice '(1 2 3) -5)))
+  (should (equal '(1 2 3) (wordnut--h-slice '(1 2 nil 3) -5)))
+  (should (equal '(1 2 3) (wordnut--h-slice '(1 2 3) -5 -5)))
+  )
+
 
 
 (ert-run-tests-batch-and-exit (car argv))
