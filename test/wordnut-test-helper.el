@@ -20,4 +20,4 @@
 	   hash))
 
 
-(provide 'tdd-helper)
+(provide 'wordnut-test-helper)

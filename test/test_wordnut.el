@@ -4,7 +4,7 @@
 (push tdd-lib-dir load-path)
 (push (file-name-directory load-file-name) load-path)
 
-(require 'tdd-helper)
+(require 'wordnut-test-helper)
 (require 'wordnut)
 
 (ert-deftest link-raw-empty-buf()
