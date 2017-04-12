@@ -4,7 +4,7 @@
 (push tdd-lib-dir load-path)
 (push (file-name-directory load-file-name) load-path)
 
-(require 'tdd-helper)
+(require 'wordnut-test-helper)
 (require 'wordnut-history)
 
 (ert-deftest history-clean()
