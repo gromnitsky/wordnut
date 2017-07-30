@@ -120,4 +120,4 @@ mode.
 
 ## License
 
-GPLv2.
+GPLv3+.
