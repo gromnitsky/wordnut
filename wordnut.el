@@ -90,7 +90,7 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
 	(setq adaptive-wrap-extra-indent 3)
 	(adaptive-wrap-prefix-mode 1))))
 
-(define-key wordnut-mode-map (kbd "q") 'delete-window)
+(define-key wordnut-mode-map (kbd "q") 'quit-window)
 (define-key wordnut-mode-map (kbd "RET") 'wordnut-lookup-current-word)
 (define-key wordnut-mode-map (kbd "l") 'wordnut-history-backward)
 (define-key wordnut-mode-map (kbd "r") 'wordnut-history-forward)
@@ -201,7 +201,7 @@ rerun `wordnut--lookup' with the selected word."
 
       (progress-reporter-update progress-reporter 2)
       (progress-reporter-done progress-reporter)
-      (wordnut-u-switch-to-buffer buf))
+      (pop-to-buffer buf))
     ))
 
 (defun wordnut--moveto (item)

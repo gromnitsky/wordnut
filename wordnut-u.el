@@ -14,13 +14,6 @@
   (delq nil
 	(mapcar (lambda (x) (and (funcall condp x) x)) lst)))
 
-(defun wordnut-u-switch-to-buffer (buf)
-  (unless (eq (current-buffer) buf)
-    (unless (cdr (window-list))
-      (split-window-vertically))
-    (other-window 1)
-    (switch-to-buffer buf)))
-
 (defun wordnut-u-fix-name (str)
   (let ((max 10))
     (if (> (length str) max)
