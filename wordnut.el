@@ -88,7 +88,9 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
 	   (boundp 'adaptive-wrap-extra-indent))
       (progn
 	(setq adaptive-wrap-extra-indent 3)
-	(adaptive-wrap-prefix-mode 1))))
+	(adaptive-wrap-prefix-mode 1)))
+  (org-mode)
+  (view-mode))
 
 (define-key wordnut-mode-map (kbd "q") 'quit-window)
 (define-key wordnut-mode-map (kbd "RET") 'wordnut-lookup-current-word)
