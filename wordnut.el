@@ -89,6 +89,7 @@ Turning on wordnut mode runs the normal hook `wordnut-mode-hook'.
       (progn
 	(setq adaptive-wrap-extra-indent 3)
 	(adaptive-wrap-prefix-mode 1)))
+  (setq org-startup-folded nil)
   (org-mode)
   (view-mode))
 
