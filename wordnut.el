@@ -1,4 +1,13 @@
-;; wordnut.el -- Major mode interface to WordNet -*- lexical-binding: t -*-
+;;; wordnut.el -- Major mode interface to WordNet -*- lexical-binding: t -*-
+
+;; Package-Version: 0.0.2
+;; Package-Requires: ((emacs "24.4"))
+
+;;; Commentary:
+
+;; Major mode interface to WordNet.
+
+;;; Code:
 
 (require 'cl-lib)
 (require 'subr-x)
