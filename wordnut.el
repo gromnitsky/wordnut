@@ -16,9 +16,6 @@
 
 (require 'wordnut-history)
 
-(defconst wordnut-meta-name "wordnut")
-(defconst wordnut-meta-version "0.0.2")
-
 (defconst wordnut-bufname "*WordNut*")
 (defvar wordnut-cmd "wn")
 (defconst wordnut-cmd-options
